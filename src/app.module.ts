@@ -10,10 +10,15 @@ import { UsecaseModule } from './diagrams/usecase/usecase.module';
 import { ComponentModule } from './diagrams/component/component.module';
 
 @Module({
-  imports: [ConfigModule.forRoot(),
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRoot({
       type: 'postgres',
-      url: process.env.DATABASE_URL,
+      host: process.env.DB_HOST,
+      port: +process.env.DB_PORT! || 5432,
+      username: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
       autoLoadEntities: true,
       synchronize: true,
     }),
@@ -23,7 +28,7 @@ import { ComponentModule } from './diagrams/component/component.module';
     ClassModule,
     PackageModule,
     UsecaseModule,
-    ComponentModule
+    ComponentModule,
   ],
   controllers: [],
   providers: [],

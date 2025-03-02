@@ -6,7 +6,7 @@ import {
   MinLength,
 } from 'class-validator';
 
-export class CreateUserDto {
+export class LoginUserDto {
   @IsString()
   @IsEmail()
   email: string;
@@ -19,8 +19,4 @@ export class CreateUserDto {
       'The password must have a Uppercase, lowercase letter and a number',
   })
   password: string;
-
-  @IsString()
-  @MinLength(6)
-  fullName: string;
 }
