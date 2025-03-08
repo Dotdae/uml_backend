@@ -3,6 +3,7 @@ import {
   Injectable,
   InternalServerErrorException,
   Logger,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -14,36 +15,54 @@ import * as bcrypt from 'bcrypt';
 import { LoginUserDto } from './dto/login-user.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { JwtService } from '@nestjs/jwt';
+import { MailService } from 'src/mail/mail.service';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class UsersService {
-  private readonly logger = new Logger('ProductsService');
+  private readonly logger = new Logger('UsersService');
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    private mailService: MailService,
     private readonly jwtService: JwtService,
-  ) {}
+  ) { }
 
   async create(createUserDto: CreateUserDto) {
     try {
       const { password, ...userData } = createUserDto;
+      const verificationCode = crypto.randomInt(100000, 999999).toString();
+
       const user = this.userRepository.create({
         ...userData,
+        verificationCode,
         password: bcrypt.hashSync(password, 10),
       });
       await this.userRepository.save(user);
-      return { ...user, token: this.generateJwtToken({ email: user.email }) };
+      await this.mailService.sendVerificationEmail(
+        user.email,
+        user.fullName,
+        verificationCode,
+      );
+      return { ...user, token: this.generateJwtToken({ id: user.id }) };
     } catch (error) {
       this.handleExceptionsDB(error);
     }
   }
 
   async login(loginUserDto: LoginUserDto) {
-    // try {
     const user = await this.userRepository.findOne({
       where: { email: loginUserDto.email },
-      select: { email: true, password: true },
+      select: {
+        email: true,
+        password: true,
+        id: true,
+        isVerified: true,
+        isActive: true,
+      },
     });
+
+    console.log(user);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials (email)');
     }
@@ -54,7 +73,13 @@ export class UsersService {
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials (password)');
     }
-    return { ...user, token: this.generateJwtToken({ email: user.email }) };
+    if (!user.isVerified) {
+      throw new UnauthorizedException('Email not verified');
+    }
+    if (!user.isActive) {
+      throw new UnauthorizedException('User is not active');
+    }
+    return { ...user, token: this.generateJwtToken({ id: user.id }) };
   }
 
   findAll() {
@@ -71,6 +96,24 @@ export class UsersService {
 
   remove(id: number) {
     return `This action removes a #${id} user`;
+  }
+
+  async verifyEmail(email: string, code: string) {
+    console.log(email, code);
+    const user = await this.userRepository.findOne({ where: { email } });
+
+    if (!user) throw new NotFoundException('User not found');
+    if (user.isVerified) throw new BadRequestException('User already verified');
+    if (user.verificationCode !== code)
+      throw new BadRequestException('Invalid verification code');
+
+    user.isVerified = true;
+    user.isActive = true;
+    user.verificationCode = null;
+
+    await this.userRepository.save(user);
+
+    return { message: 'Email successfully verified!' };
   }
 
   private handleExceptionsDB(error: any) {

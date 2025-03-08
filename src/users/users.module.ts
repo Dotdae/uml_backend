@@ -6,11 +6,13 @@ import { User } from './entities/user.entity';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { MailModule } from 'src/mail/mail.module';
 
 @Module({
   controllers: [UsersController],
   providers: [UsersService, JwtStrategy],
   imports: [
+    MailModule,
     TypeOrmModule.forFeature([User]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
 
@@ -28,4 +30,4 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 
   exports: [JwtStrategy, PassportModule, JwtModule],
 })
-export class UsersModule {}
+export class UsersModule { }

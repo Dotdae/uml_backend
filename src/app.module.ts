@@ -8,6 +8,7 @@ import { ClassModule } from './diagrams/class/class.module';
 import { PackageModule } from './diagrams/package/package.module';
 import { UsecaseModule } from './diagrams/usecase/usecase.module';
 import { ComponentModule } from './diagrams/component/component.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { ComponentModule } from './diagrams/component/component.module';
     PackageModule,
     UsecaseModule,
     ComponentModule,
+    MailModule,
   ],
   controllers: [],
   providers: [],

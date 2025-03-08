@@ -22,14 +22,24 @@ export class User {
   password: string;
 
   @Column('boolean', {
-    default: true,
+    default: false,
   })
   isActive: boolean;
+
+  @Column('boolean', {
+    default: false,
+  })
+  isVerified: boolean;
 
   @Column('text', {
     nullable: false,
   })
   fullName: string;
+
+  @Column('text', {
+    nullable: true,
+  })
+  verificationCode: string;
 
   @BeforeInsert()
   checkFieldsBeforeInsert() {
