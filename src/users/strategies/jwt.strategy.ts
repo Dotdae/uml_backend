@@ -30,6 +30,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     if (!user.isActive) throw new UnauthorizedException('User is not active');
 
+    if (!user.isVerified)
+      throw new UnauthorizedException('Email is not verified');
+
     return user;
   }
 }

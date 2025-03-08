@@ -14,9 +14,11 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { LoginUserDto } from './dto/login-user.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
+import * as jwt from 'jsonwebtoken';
 import { JwtService } from '@nestjs/jwt';
 import { MailService } from 'src/mail/mail.service';
 import * as crypto from 'crypto';
+import { Response, Request } from 'express';
 
 @Injectable()
 export class UsersService {
@@ -44,13 +46,14 @@ export class UsersService {
         user.fullName,
         verificationCode,
       );
+
       return { ...user, token: this.generateJwtToken({ id: user.id }) };
     } catch (error) {
       this.handleExceptionsDB(error);
     }
   }
 
-  async login(loginUserDto: LoginUserDto) {
+  async login(loginUserDto: LoginUserDto, res: Response) {
     const user = await this.userRepository.findOne({
       where: { email: loginUserDto.email },
       select: {
@@ -62,7 +65,7 @@ export class UsersService {
       },
     });
 
-    console.log(user);
+    // console.log(user);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials (email)');
     }
@@ -79,7 +82,28 @@ export class UsersService {
     if (!user.isActive) {
       throw new UnauthorizedException('User is not active');
     }
-    return { ...user, token: this.generateJwtToken({ id: user.id }) };
+
+    const refreshToken = jwt.sign(
+      { id: user.id },
+      process.env.JWT_REFRESH_TOKEN,
+      {
+        expiresIn: '7d',
+      },
+    );
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      sameSite: 'strict',
+    });
+    res.json({ token: this.generateJwtToken({ id: user.id }) });
+  }
+
+  logout(res: Response) {
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      sameSite: 'strict',
+    });
+    return { message: 'Logout successful' };
   }
 
   findAll() {
@@ -98,6 +122,25 @@ export class UsersService {
     return `This action removes a #${id} user`;
   }
 
+  refreshToken(req: Request, res: Response) {
+    console.log(req.cookies);
+    const refreshToken = req.cookies['refreshToken'];
+    if (!refreshToken) {
+      throw new UnauthorizedException('No refresh token found');
+    }
+
+    try {
+      const payload = jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN);
+
+      const newAccessToken = this.jwtService.sign({ sub: payload.sub });
+
+      return res.json({ token: newAccessToken });
+    } catch (err) {
+      console.log(err);
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+  }
+
   async verifyEmail(email: string, code: string) {
     console.log(email, code);
     const user = await this.userRepository.findOne({ where: { email } });
@@ -114,6 +157,21 @@ export class UsersService {
     await this.userRepository.save(user);
 
     return { message: 'Email successfully verified!' };
+  }
+
+  async resetPassword(email: string) {
+    const user = await this.userRepository.findOne({ where: { email } });
+    if (!user) throw new NotFoundException('User not found');
+
+    const resetCode = crypto.randomInt(100000, 999999).toString();
+    user.verificationCode = resetCode;
+    await this.userRepository.save(user);
+    await this.mailService.sendResetPasswordEmail(
+      user.email,
+      user.fullName,
+      resetCode,
+    );
+    return { message: 'Reset password email sent' };
   }
 
   private handleExceptionsDB(error: any) {

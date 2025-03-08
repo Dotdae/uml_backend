@@ -22,7 +22,7 @@ import { MailModule } from 'src/mail/mail.module';
       useFactory: () => {
         return {
           secret: process.env.JWT_SECRET,
-          signOptions: { expiresIn: '2hr' },
+          signOptions: { expiresIn: '2m' },
         };
       },
     }),

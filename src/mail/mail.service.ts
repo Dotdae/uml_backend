@@ -15,4 +15,14 @@ export class MailService {
       context: { name, verificationLink }, // Pass data to template
     });
   }
+
+  async sendResetPasswordEmail(email: string, name: string, code: string) {
+    const resetPasswordLink = `http://localhost:3000/api/users/reset-password/${email}/${code}`;
+    await this.mailerService.sendMail({
+      to: email,
+      subject: 'Reset Your Password',
+      template: 'reset-password-email',
+      context: { name, resetPasswordLink },
+    });
+  }
 }
