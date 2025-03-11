@@ -7,7 +7,8 @@ import { UpdateProyectDto } from './dto/update-proyect.dto';
 export class ProyectsController {
   constructor(private readonly proyectsService: ProyectsService) {}
 
-  @Post()
+  //Endpoint para crear un nuevo proyecto
+  @Post('create')
   create(@Body() createProyectDto: CreateProyectDto) {
     return this.proyectsService.create(createProyectDto);
   }
@@ -22,13 +23,20 @@ export class ProyectsController {
     return this.proyectsService.findOne(+id);
   }
 
-  @Patch(':id')
+  // Endpoint para obtener todos los proyectos de un usuario específico
+  @Get('user/:userId')
+  findAllByUser(@Param('userId') userId: string) {
+    return this.proyectsService.findAllByUser(userId);
+  }
+
+  //Endpoint para actualizar el nombre de un proyecto
+  @Patch('update/:id')
   update(@Param('id') id: string, @Body() updateProyectDto: UpdateProyectDto) {
     return this.proyectsService.update(+id, updateProyectDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.proyectsService.remove(+id);
+    return this.proyectsService.deleteProjectById(+id);
   }
 }

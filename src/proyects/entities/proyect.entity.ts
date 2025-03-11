@@ -4,13 +4,16 @@ import { Package } from "src/diagrams/package/entities/package.entity";
 import { Sequence } from "src/diagrams/sequence/entities/sequence.entity";
 import { Usecase } from "src/diagrams/usecase/entities/usecase.entity";
 import { User } from "src/users/entities/user.entity";
-import { Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity('projects')
 export class Proyect {
 
     @PrimaryGeneratedColumn()
     id:number
+
+    @Column({ type: 'varchar', length: 255 })
+    name: string;
 
     @ManyToOne(
         () => User,
