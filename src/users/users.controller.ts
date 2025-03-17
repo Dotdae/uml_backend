@@ -42,6 +42,20 @@ export class UsersController {
     return this.usersService.verifyEmail(email, code);
   }
 
+  @Post('reset-password')
+  resetPassword(@Body() { email }: { email: string }) {
+    return this.usersService.requestResetPassword(email);
+  }
+
+  @Post('reset-password/:email/:code')
+  resetPasswordConfirm(
+    @Param('email') email: string,
+    @Param('code') code: string,
+    @Body() { password }: { password: string },
+  ) {
+    return this.usersService.resetPassword(email, code, password);
+  }
+
   @Get('refresh-token')
   refreshToken(@Req() req: Request, @Res() res: Response) {
     return this.usersService.refreshToken(req, res);

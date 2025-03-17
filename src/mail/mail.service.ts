@@ -23,7 +23,7 @@ export class MailService {
       to: email,
       subject: 'Reset Your Password',
       template: 'reset-password-email',
-      context: { name, resetPasswordLink },
+      context: { name, resetPasswordLink, expirationTime: '1 hour' },
     });
   }
 }

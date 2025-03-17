@@ -10,7 +10,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { Repository } from 'typeorm';
+import { MoreThan, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { LoginUserDto } from './dto/login-user.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
@@ -164,19 +164,38 @@ export class UsersService {
     return { message: 'Email successfully verified!' };
   }
 
-  async resetPassword(email: string) {
+  async requestResetPassword(email: string) {
+    if (!email) throw new BadRequestException('Email is required');
     const user = await this.userRepository.findOne({ where: { email } });
+
     if (!user) throw new NotFoundException('User not found');
 
     const resetCode = crypto.randomInt(100000, 999999).toString();
-    user.verificationCode = resetCode;
+    user.resetCode = resetCode;
+    user.resetExpires = new Date(Date.now() + 3600000);
     await this.userRepository.save(user);
     await this.mailService.sendResetPasswordEmail(
       user.email,
       user.fullName,
-      resetCode,
+      user.resetCode,
     );
     return { message: 'Reset password email sent' };
+  }
+
+  async resetPassword(email: string, code: string, newPassword: string) {
+    const user = await this.userRepository.findOne({
+      where: { email, resetCode: code, resetExpires: MoreThan(new Date()) },
+    });
+
+    if (!user) {
+      throw new BadRequestException('Invalid or expired reset code');
+    }
+
+    user.password = bcrypt.hashSync(newPassword, 10);
+    user.resetCode = null;
+    user.resetExpires = null;
+    await this.userRepository.save(user);
+    return { message: 'Password successfully reset' };
   }
 
   async validateGoogleUser(googleUser: any) {

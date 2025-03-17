@@ -41,6 +41,12 @@ export class User {
   })
   verificationCode: string;
 
+  @Column('text', { nullable: true })
+  resetCode: string;
+
+  @Column('timestamp', { nullable: true })
+  resetExpires: Date;
+
   @BeforeInsert()
   checkFieldsBeforeInsert() {
     this.email = this.email.toLowerCase().trim();
