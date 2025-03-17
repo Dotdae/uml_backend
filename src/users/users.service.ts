@@ -28,7 +28,7 @@ export class UsersService {
     private userRepository: Repository<User>,
     private mailService: MailService,
     private readonly jwtService: JwtService,
-  ) {}
+  ) { }
 
   async create(createUserDto: CreateUserDto) {
     try {
@@ -177,6 +177,41 @@ export class UsersService {
       resetCode,
     );
     return { message: 'Reset password email sent' };
+  }
+
+  async validateGoogleUser(googleUser: any) {
+    let user = await this.userRepository.findOne({
+      where: { email: googleUser.email },
+    });
+
+    if (!user) {
+      user = this.createGoogleUser(googleUser);
+    }
+
+    const accessToken = this.generateJwtToken({ id: user.id });
+    const refreshToken = jwt.sign(
+      { id: user.id },
+      process.env.JWT_REFRESH_TOKEN,
+      { expiresIn: '7d' },
+    );
+
+    return { user, accessToken, refreshToken };
+  }
+
+  private createGoogleUser(googleUser: any) {
+    const plainPassowrd = Math.random().toString(36).substring(2, 9);
+
+    const user = this.userRepository.create({
+      email: googleUser.email,
+      password: bcrypt.hashSync(plainPassowrd, 10),
+      fullName: googleUser.fullName,
+      isVerified: true,
+      isActive: true,
+    });
+    // console.log(user);
+    this.userRepository.save(user);
+
+    return user;
   }
 
   private handleExceptionsDB(error: any) {

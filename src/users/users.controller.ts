@@ -20,7 +20,7 @@ import { GoogleAuthGuard } from './guards/google-auth.guard';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   @Post('register')
   create(@Body() createUserDto: CreateUserDto) {
@@ -63,9 +63,20 @@ export class UsersController {
 
   @UseGuards(GoogleAuthGuard)
   @Get('google/login')
-  googleLogin() {}
+  googleLogin() { }
 
   @UseGuards(GoogleAuthGuard)
   @Get('google/callback')
-  googleCallback() {}
+  async googleCallback(@Req() req, @Res() res) {
+    const { user, accessToken, refreshToken } =
+      await this.usersService.validateGoogleUser(req.user);
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      sameSite: 'strict',
+      // secure: process.env.NODE_ENV === 'production',
+    });
+
+    return res.json({ user, accessToken });
+  }
 }

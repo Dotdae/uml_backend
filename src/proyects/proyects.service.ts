@@ -7,20 +7,18 @@ import { Proyect } from './entities/proyect.entity';
 import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
-
 export class ProyectsService {
-
   constructor(
     @InjectRepository(Proyect)
-    
     private readonly proyectRepository: Repository<Proyect>,
     @InjectRepository(User)
-        private userRepository: Repository<User>,
-  ) {}
-
+    private userRepository: Repository<User>,
+  ) { }
 
   async create(createProyectDto: CreateProyectDto): Promise<Proyect> {
-    const user = await this.userRepository.findOneBy({ id: createProyectDto.userID });
+    const user = await this.userRepository.findOneBy({
+      id: createProyectDto.userID,
+    });
 
     if (!user) {
       throw new NotFoundException('Usuario no encontrado');
@@ -29,7 +27,7 @@ export class ProyectsService {
     // Crea el nuevo proyecto
     const proyect = this.proyectRepository.create({
       name: createProyectDto.name,
-      userID: user // Asigna el objeto de usuario completo
+      userID: user, // Asigna el objeto de usuario completo
     });
 
     return await this.proyectRepository.save(proyect);
@@ -47,13 +45,13 @@ export class ProyectsService {
     const proyect = await this.proyectRepository.findOne({
       where: { id },
       relations: {
-        userID: true,  
+        userID: true,
         sequence: true,
         clase: true,
         usecase: true,
         paquete: true,
-        component: true
-      }
+        component: true,
+      },
     });
 
     if (!proyect) {
@@ -74,14 +72,17 @@ export class ProyectsService {
     // Buscar todos los proyectos donde userID coincide con el userId proporcionado
     const proyects = await this.proyectRepository.find({
       where: {
-        userID: { id: userId }
-      }
+        userID: { id: userId },
+      },
     });
 
     return proyects;
   }
 
-  async update(id: number, updateProyectDto: UpdateProyectDto): Promise<Proyect> {
+  async update(
+    id: number,
+    updateProyectDto: UpdateProyectDto,
+  ): Promise<Proyect> {
     // Buscar el proyecto existente
     const proyect = await this.proyectRepository.findOneBy({ id });
 
