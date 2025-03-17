@@ -7,10 +7,11 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { MailModule } from 'src/mail/mail.module';
+import { GoogleOauthStrategy } from './strategies/google.strategy';
 
 @Module({
   controllers: [UsersController],
-  providers: [UsersService, JwtStrategy],
+  providers: [UsersService, JwtStrategy, GoogleOauthStrategy],
   imports: [
     MailModule,
     TypeOrmModule.forFeature([User]),
@@ -30,4 +31,4 @@ import { MailModule } from 'src/mail/mail.module';
 
   exports: [JwtStrategy, PassportModule, JwtModule],
 })
-export class UsersModule { }
+export class UsersModule {}

@@ -16,10 +16,11 @@ import { GetUser } from './decorators/get-user.decorator';
 import { User } from './entities/user.entity';
 import { GetRawHeaders } from './decorators/get-raw-headers.decorator';
 import { Response, Request } from 'express';
+import { GoogleAuthGuard } from './guards/google-auth.guard';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) { }
+  constructor(private readonly usersService: UsersService) {}
 
   @Post('register')
   create(@Body() createUserDto: CreateUserDto) {
@@ -59,4 +60,12 @@ export class UsersController {
       userEmail,
     };
   }
+
+  @UseGuards(GoogleAuthGuard)
+  @Get('google/login')
+  googleLogin() {}
+
+  @UseGuards(GoogleAuthGuard)
+  @Get('google/callback')
+  googleCallback() {}
 }

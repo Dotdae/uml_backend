@@ -28,7 +28,7 @@ export class UsersService {
     private userRepository: Repository<User>,
     private mailService: MailService,
     private readonly jwtService: JwtService,
-  ) { }
+  ) {}
 
   async create(createUserDto: CreateUserDto) {
     try {
@@ -129,7 +129,6 @@ export class UsersService {
   }
 
   refreshToken(req: Request, res: Response) {
-    console.log(req.cookies);
     const refreshToken = req.cookies['refreshToken'];
     if (!refreshToken) {
       throw new UnauthorizedException('No refresh token found');

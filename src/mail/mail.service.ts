@@ -3,10 +3,11 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class MailService {
+  public url: string = process.env.BACKEND_URL;
   constructor(private readonly mailerService: MailerService) { }
 
   async sendVerificationEmail(email: string, name: string, code: string) {
-    const verificationLink = `http://localhost:3000/api/users/verify/${email}/${code}`;
+    const verificationLink = `${this.url}/users/verify/${email}/${code}`;
 
     await this.mailerService.sendMail({
       to: email,
@@ -17,7 +18,7 @@ export class MailService {
   }
 
   async sendResetPasswordEmail(email: string, name: string, code: string) {
-    const resetPasswordLink = `http://localhost:3000/api/users/reset-password/${email}/${code}`;
+    const resetPasswordLink = `${this.url}/users/reset-password/${email}/${code}`;
     await this.mailerService.sendMail({
       to: email,
       subject: 'Reset Your Password',
