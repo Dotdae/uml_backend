@@ -23,7 +23,7 @@ import { GoogleOauthStrategy } from './strategies/google.strategy';
       useFactory: () => {
         return {
           secret: process.env.JWT_SECRET,
-          signOptions: { expiresIn: '2m' },
+          signOptions: { expiresIn: '1hr' },
         };
       },
     }),
@@ -31,4 +31,4 @@ import { GoogleOauthStrategy } from './strategies/google.strategy';
 
   exports: [JwtStrategy, PassportModule, JwtModule],
 })
-export class UsersModule {}
+export class UsersModule { }

@@ -82,15 +82,23 @@ export class UsersController {
   @UseGuards(GoogleAuthGuard)
   @Get('google/callback')
   async googleCallback(@Req() req, @Res() res) {
+    console.log('googleCallback method called');
+    console.log('req.user:', req.user);
+
+    const requestUser = req.user.user;
+
     const { user, accessToken, refreshToken } =
-      await this.usersService.validateGoogleUser(req.user);
+      await this.usersService.validateGoogleUser(requestUser);
+
+    console.log('User after callback:', user);
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       sameSite: 'strict',
       // secure: process.env.NODE_ENV === 'production',
     });
-
-    return res.json({ user, accessToken });
+    return res.redirect(
+      `${process.env.FRONTEND_URL}/auth/google-callback?accessToken=${accessToken}`,
+    );
   }
 }

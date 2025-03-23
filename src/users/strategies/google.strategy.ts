@@ -15,6 +15,7 @@ export class GoogleOauthStrategy extends PassportStrategy(Strategy) {
       clientSecret: configService.get<string>('GOOGLE_CLIENT_SECRET'),
       callbackURL: configService.get<string>('GOOGLE_CALLBACK_URL'),
       scope: ['email', 'profile'],
+      // passReqToCallback: true,
     });
   }
 
@@ -24,13 +25,20 @@ export class GoogleOauthStrategy extends PassportStrategy(Strategy) {
     profile: any,
     done: VerifyCallback,
   ) {
+    console.log('GoogleOauthStrategy validate method called');
+    console.log(profile);
+    const email = profile.emails[0]?.value;
     const user = await this.userService.validateGoogleUser({
-      email: profile.email,
+      email,
       fullName: profile.displayName,
       lastName: profile.name.familyName,
       avatarUrl: profile.photos[0].value,
       password: '',
     });
+
+    profile = null;
+
+    console.log('User validated:', user);
     done(null, user);
   }
 }

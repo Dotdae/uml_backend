@@ -139,6 +139,17 @@ export class UsersService {
 
       const newAccessToken = this.jwtService.sign({ sub: payload.sub });
 
+      const newRefreshToken = this.jwtService.sign(
+        { sub: payload.sub },
+        { secret: process.env.JWT_REFRESH_TOKEN, expiresIn: '7d' },
+      );
+
+      res.cookie('refreshToken', newRefreshToken, {
+        httpOnly: true,
+        // secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+      });
+      console.log('Refresh token: ', newRefreshToken);
       return res.json({ token: newAccessToken });
     } catch (err) {
       console.log(err);
@@ -199,12 +210,15 @@ export class UsersService {
   }
 
   async validateGoogleUser(googleUser: any) {
+    console.log(googleUser);
+    console.log(`email to compare: ${googleUser}`);
     let user = await this.userRepository.findOne({
       where: { email: googleUser.email },
     });
+    console.log(user);
 
     if (!user) {
-      user = this.createGoogleUser(googleUser);
+      user = await this.createGoogleUser(googleUser);
     }
 
     const accessToken = this.generateJwtToken({ id: user.id });
@@ -217,7 +231,7 @@ export class UsersService {
     return { user, accessToken, refreshToken };
   }
 
-  private createGoogleUser(googleUser: any) {
+  private async createGoogleUser(googleUser: any) {
     const plainPassowrd = Math.random().toString(36).substring(2, 9);
 
     const user = this.userRepository.create({
@@ -228,9 +242,7 @@ export class UsersService {
       isActive: true,
     });
     // console.log(user);
-    this.userRepository.save(user);
-
-    return user;
+    return await this.userRepository.save(user);
   }
 
   private handleExceptionsDB(error: any) {
