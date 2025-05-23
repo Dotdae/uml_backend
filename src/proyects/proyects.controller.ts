@@ -8,7 +8,7 @@ export class ProyectsController {
   constructor(private readonly proyectsService: ProyectsService) {}
 
   //Endpoint para crear un nuevo proyecto
-  @Post('create')
+  @Post()
   create(@Body() createProyectDto: CreateProyectDto) {
     return this.proyectsService.create(createProyectDto);
   }
@@ -30,7 +30,7 @@ export class ProyectsController {
   }
 
   //Endpoint para actualizar el nombre de un proyecto
-  @Patch('update/:id')
+  @Patch(':id')
   update(@Param('id') id: string, @Body() updateProyectDto: UpdateProyectDto) {
     return this.proyectsService.update(+id, updateProyectDto);
   }

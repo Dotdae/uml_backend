@@ -8,52 +8,27 @@ import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "ty
 
 @Entity('projects')
 export class Proyect {
+  @PrimaryGeneratedColumn()
+  id: number;
 
-    @PrimaryGeneratedColumn()
-    id:number
+  @Column({ type: 'varchar', length: 255 })
+  name: string;
 
-    @Column({ type: 'varchar', length: 255 })
-    name: string;
+  @ManyToOne(() => User, (user) => user.project, { onDelete: 'CASCADE' })
+  userID: User;
 
-    @ManyToOne(
-        () => User,
-        (user) => user.id,
-        {onDelete: 'CASCADE'}
-    )
-    userID:User;
-    
-    @OneToMany(
-        () => Sequence,
-        (sequence) => sequence.id,
-        {onUpdate: 'CASCADE'}
-    )
-    sequence:Sequence[];
+  @OneToMany(() => Sequence, (sequence) => sequence.project, { onUpdate: 'CASCADE' })
+  sequence: Sequence[];
 
-    @OneToMany(
-        () => Class,
-        (clase) => clase.id,
-        {onUpdate: 'CASCADE'}
-    )
-    clase:Class[];
+  @OneToMany(() => Class, (clase) => clase.project, { onUpdate: 'CASCADE' })
+  clase: Class[];
 
-    @OneToMany(
-        () => Usecase,
-        (usecase) => usecase.id,
-        {onUpdate: 'CASCADE'}
-    )
-    usecase:Usecase[];
+  @OneToMany(() => Usecase, (usecase) => usecase.project, { onUpdate: 'CASCADE' })
+  usecase: Usecase[];
 
-    @OneToMany(
-        () => Package,
-        (paquete) => paquete.id,
-        {onUpdate: 'CASCADE'}
-    )
-    paquete:Package[];
+  @OneToMany(() => Package, (paquete) => paquete.project, { onUpdate: 'CASCADE' })
+  paquete: Package[];
 
-    @OneToMany(
-        () => Component,
-        (component) => component.id,
-        {onUpdate: 'CASCADE'}
-    )
-    component:Component[];
+  @OneToMany(() => Component, (component) => component.project, { onUpdate: 'CASCADE' })
+  component: Component[];
 }
