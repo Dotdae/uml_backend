@@ -150,6 +150,9 @@ export class UsersService {
         sameSite: 'strict',
       });
       console.log('Refresh token: ', newRefreshToken);
+      console.log('New access token: ', newAccessToken);
+      console.log('Payload: ', payload);
+      
       return res.json({ token: newAccessToken });
     } catch (err) {
       console.log(err);
@@ -210,15 +213,23 @@ export class UsersService {
   }
 
   async validateGoogleUser(googleUser: any) {
-    console.log(googleUser);
-    console.log(`email to compare: ${googleUser}`);
+    console.log('Validating Google user:', googleUser);
     let user = await this.userRepository.findOne({
       where: { email: googleUser.email },
     });
-    console.log(user);
+    console.log('Existing user:', user);
 
     if (!user) {
       user = await this.createGoogleUser(googleUser);
+    } else {
+      // Update existing user's Google profile information
+      user.fullName = googleUser.fullName;
+      user.lastName = googleUser.lastName;
+      user.avatarUrl = googleUser.avatarUrl;
+      user.isGoogleUser = true;
+      user.isVerified = true;
+      user.isActive = true;
+      user = await this.userRepository.save(user);
     }
 
     const accessToken = this.generateJwtToken({ id: user.id });
@@ -232,16 +243,19 @@ export class UsersService {
   }
 
   private async createGoogleUser(googleUser: any) {
-    const plainPassowrd = Math.random().toString(36).substring(2, 9);
+    const plainPassword = Math.random().toString(36).substring(2, 9);
 
     const user = this.userRepository.create({
       email: googleUser.email,
-      password: bcrypt.hashSync(plainPassowrd, 10),
+      password: bcrypt.hashSync(plainPassword, 10),
       fullName: googleUser.fullName,
+      lastName: googleUser.lastName,
+      avatarUrl: googleUser.avatarUrl,
+      isGoogleUser: true,
       isVerified: true,
       isActive: true,
     });
-    // console.log(user);
+
     return await this.userRepository.save(user);
   }
 
