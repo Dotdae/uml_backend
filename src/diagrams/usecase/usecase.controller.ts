@@ -18,17 +18,17 @@ export class UsecaseController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.usecaseService.findOne(+id);
+  findOne(@Param('id') id: number) {
+    return this.usecaseService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUsecaseDto: UpdateUsecaseDto) {
-    return this.usecaseService.update(+id, updateUsecaseDto);
+  update(@Param('id') id: number, @Body() updateUsecaseDto: UpdateUsecaseDto) {
+    return this.usecaseService.update(id, updateUsecaseDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.usecaseService.remove(+id);
+  remove(@Param('id') id: number) {
+    return this.usecaseService.remove(id);
   }
 }

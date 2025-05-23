@@ -1,15 +1,26 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Patch,
+  Delete,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { ComponentService } from './component.service';
 import { CreateComponentDto } from './dto/create-component.dto';
 import { UpdateComponentDto } from './dto/update-component.dto';
+import { Component } from './entities/component.entity';
+
 
 @Controller('component')
 export class ComponentController {
   constructor(private readonly componentService: ComponentService) {}
 
-  @Post()
-  create(@Body() createComponentDto: CreateComponentDto) {
-    return this.componentService.create(createComponentDto);
+  @Post('create')
+  async create(@Body() createComponentDto: CreateComponentDto): Promise<Component> {
+    return await this.componentService.create(createComponentDto);
   }
 
   @Get()
@@ -22,13 +33,17 @@ export class ComponentController {
     return this.componentService.findOne(+id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateComponentDto: UpdateComponentDto) {
-    return this.componentService.update(+id, updateComponentDto);
+  // 🔹 Actualizar un componente
+  @Patch('/update/:id')
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateComponentDto: UpdateComponentDto,
+  ): Promise<Component> {
+    return await this.componentService.update(id, updateComponentDto);
   }
-
+// 🔹 Eliminar un componente
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.componentService.remove(+id);
+  async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
+    return await this.componentService.remove(id);
   }
 }

@@ -39,4 +39,10 @@ export class ProyectsController {
   remove(@Param('id') id: string) {
     return this.proyectsService.deleteProjectById(+id);
   }
+
+  @Get('diagrams/:id')
+  // Endpoint para obtener todos los diagramas de un proyecto específico
+  getProjectDiagrams(@Param('id') id: number) {
+    return this.proyectsService.getProjectDiagrams(id);
+  }
 }

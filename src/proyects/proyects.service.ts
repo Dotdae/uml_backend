@@ -6,6 +6,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Proyect } from './entities/proyect.entity';
 import { User } from 'src/users/entities/user.entity';
 
+
 @Injectable()
 export class ProyectsService {
   constructor(
@@ -104,5 +105,30 @@ export class ProyectsService {
     if (result.affected === 0) {
       throw new NotFoundException(`El proyecto con ID ${projectId} no existe`);
     }
+  }
+
+  async getProjectDiagrams(projectId: number): Promise<any> {
+    const project = await this.proyectRepository.findOne({
+      where: { id: projectId },
+      relations: {
+        sequence: true,
+        clase: true,
+        usecase: true,
+        paquete: true,
+        component: true,
+      },
+    });
+  
+    if (!project) {
+      throw new NotFoundException(`Proyecto con ID ${projectId} no encontrado`);
+    }
+  
+    return {
+      classDiagrams: project.clase || [],
+      sequenceDiagrams: project.sequence || [],
+      usecaseDiagrams: project.usecase || [],
+      packageDiagrams: project.paquete || [],
+      componentDiagrams: project.component || [],
+    };
   }
 }

@@ -1,34 +1,50 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Patch,
+  Delete,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { PackageService } from './package.service';
 import { CreatePackageDto } from './dto/create-package.dto';
 import { UpdatePackageDto } from './dto/update-package.dto';
+import { Package } from './entities/package.entity';
 
 @Controller('package')
 export class PackageController {
   constructor(private readonly packageService: PackageService) {}
 
-  @Post()
-  create(@Body() createPackageDto: CreatePackageDto) {
-    return this.packageService.create(createPackageDto);
-  }
+    // 🔹 Crear un nuevo paquete
+    @Post()
+    async create(@Body() createPackageDto: CreatePackageDto): Promise<Package> {
+      return await this.packageService.create(createPackageDto);
+    }
 
+  // 🔹 Obtener todos los paquetes
   @Get()
-  findAll() {
-    return this.packageService.findAll();
+  async findAll(): Promise<Package[]> {
+    return await this.packageService.findAll();
   }
 
-  @Get(':id')
+  @Get(':id') 
   findOne(@Param('id') id: string) {
     return this.packageService.findOne(+id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePackageDto: UpdatePackageDto) {
-    return this.packageService.update(+id, updatePackageDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.packageService.remove(+id);
-  }
+    // 🔹 Actualizar un paquete
+    @Patch(':id')
+    async update(
+      @Param('id', ParseIntPipe) id: number,
+      @Body() updatePackageDto: UpdatePackageDto,
+    ): Promise<Package> {
+      return await this.packageService.update(id, updatePackageDto);
+    }
+   // 🔹 Eliminar un paquete
+   @Delete(':id')
+   async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
+     return await this.packageService.remove(id);
+   }
 }

@@ -18,17 +18,17 @@ export class SequenceController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.sequenceService.findOne(+id);
+  findOne(@Param('id') id: number) {
+    return this.sequenceService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSequenceDto: UpdateSequenceDto) {
-    return this.sequenceService.update(+id, updateSequenceDto);
+  update(@Param('id') id: number, @Body() updateSequenceDto: UpdateSequenceDto) {
+    return this.sequenceService.update(id, updateSequenceDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.sequenceService.remove(+id);
+  remove(@Param('id') id: number) {
+    return this.sequenceService.remove(id);
   }
 }

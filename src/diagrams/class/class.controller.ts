@@ -29,6 +29,6 @@ export class ClassController {
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.classService.remove(+id);
+    return this.classService.delete(+id);
   }
 }
