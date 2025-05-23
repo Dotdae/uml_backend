@@ -39,6 +39,21 @@ export class User {
   @Column('text', {
     nullable: true,
   })
+  avatarUrl: string;
+
+  @Column('text', {
+    nullable: true,
+  })
+  lastName: string;
+
+  @Column('boolean', {
+    default: false,
+  })
+  isGoogleUser: boolean;
+
+  @Column('text', {
+    nullable: true,
+  })
   verificationCode: string;
 
   @Column('text', { nullable: true })
@@ -56,6 +71,7 @@ export class User {
   checkFieldsBeforeUpdate() {
     this.checkFieldsBeforeInsert();
   }
+
   @OneToMany(() => Proyect, (project) => project.userID, {
     onUpdate: 'CASCADE',
   })
