@@ -3,7 +3,7 @@ import { ProyectsService } from './proyects.service';
 import { CreateProyectDto } from './dto/create-proyect.dto';
 import { UpdateProyectDto } from './dto/update-proyect.dto';
 
-@Controller('proyects')
+@Controller('projects')
 export class ProyectsController {
   constructor(private readonly proyectsService: ProyectsService) {}
 

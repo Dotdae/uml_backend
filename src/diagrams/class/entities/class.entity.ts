@@ -1,5 +1,5 @@
-import { Proyect } from "src/proyects/entities/proyect.entity";
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Proyect } from 'src/proyects/entities/proyect.entity';
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('class')
 export class Class {
@@ -9,10 +9,6 @@ export class Class {
     @Column('json')
     info: string;
 
-    @ManyToOne(
-        () => Proyect,
-        (project) => project.id,
-        {onDelete: 'CASCADE'}
-    )
+    @ManyToOne(() => Proyect, (project) => project.id, { onDelete: 'CASCADE' })
     project: Proyect;
 }

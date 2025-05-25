@@ -13,14 +13,14 @@ export class SequenceService {
     private readonly sequenceRepository: Repository<Sequence>,
     @InjectRepository(Proyect)
     private readonly projectRepository: Repository<Proyect>,
-  ) {}
+  ) { }
 
-  
-  
   async create(createSequenceDto: CreateSequenceDto): Promise<Sequence> {
     const { info, projectId } = createSequenceDto;
 
-    const project = await this.projectRepository.findOne({ where: { id: projectId } });
+    const project = await this.projectRepository.findOne({
+      where: { id: projectId },
+    });
     if (!project) {
       throw new NotFoundException(`El proyecto con ID ${projectId} no existe`);
     }
@@ -29,23 +29,29 @@ export class SequenceService {
     return await this.sequenceRepository.save(newSequence);
   }
 
-
   async findAll(): Promise<Sequence[]> {
     return this.sequenceRepository.find({ relations: ['project'] });
   }
 
   async findOne(id: number): Promise<Sequence> {
-    const sequence = await this.sequenceRepository.findOne({ where: { id }, relations: ['project'] });
+    const sequence = await this.sequenceRepository.findOne({
+      where: { id },
+      relations: ['project'],
+    });
     if (!sequence) {
       throw new NotFoundException(`La secuencia con ID ${id} no existe`);
     }
     return sequence;
   }
 
-
-  async update(id: number, updateSequenceDto: UpdateSequenceDto): Promise<Sequence> {
+  async update(
+    id: number,
+    updateSequenceDto: UpdateSequenceDto,
+  ): Promise<Sequence> {
     await this.sequenceRepository.update(id, updateSequenceDto);
-    const updatedSequence = await this.sequenceRepository.findOne({ where: { id } });
+    const updatedSequence = await this.sequenceRepository.findOne({
+      where: { id },
+    });
     if (!updatedSequence) {
       throw new NotFoundException(`La secuencia con ID ${id} no existe`);
     }

@@ -6,7 +6,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Class } from './entities/class.entity';
 
-
 @Injectable()
 export class ClassService {
   constructor(
@@ -15,15 +14,16 @@ export class ClassService {
 
     @InjectRepository(Proyect)
     private readonly projectRepository: Repository<Proyect>,
-  ) {}
-
+  ) { }
 
   // Crear una nueva clase
   async create(createClassDTO: CreateClassDto): Promise<Class> {
     const { info, projectId } = createClassDTO;
 
     // Verificar que el proyecto existe
-    const project = await this.projectRepository.findOne({ where: { id: projectId } });
+    const project = await this.projectRepository.findOne({
+      where: { id: projectId },
+    });
     if (!project) {
       throw new NotFoundException(`El proyecto con ID ${projectId} no existe`);
     }
@@ -36,13 +36,17 @@ export class ClassService {
     return await this.classRepository.save(newClass);
   }
 
-  findAll() {
-    return `This action returns all class`;
+  async findAll() {
+    const classes = await this.classRepository.find();
+    return classes;
   }
 
-   // Obtener diagrama por ID
-   async findOne(id: number): Promise<Class> {
-    const foundClass = await this.classRepository.findOne({ where: { id }, relations: ['project'] });
+  // Obtener diagrama por ID
+  async findOne(id: number): Promise<Class> {
+    const foundClass = await this.classRepository.findOne({
+      where: { id },
+      relations: ['project'],
+    });
 
     if (!foundClass) {
       throw new NotFoundException(`La clase con ID ${id} no existe`);
@@ -56,19 +60,18 @@ export class ClassService {
       id,
       ...updateClassDto, // ✅ Aseguramos que sea un objeto
     });
-  
+
     if (!existingClass) {
       throw new NotFoundException(`Class with ID ${id} not found`);
     }
-  
+
     return this.classRepository.save(existingClass);
   }
-  
 
-async delete(id: number): Promise<void> {
-  const result = await this.classRepository.delete(id);
-  if (result.affected === 0) {
-    throw new NotFoundException(`La clase con ID ${id} no existe`);
+  async delete(id: number): Promise<void> {
+    const result = await this.classRepository.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(`La clase con ID ${id} no existe`);
+    }
   }
-}
 }
