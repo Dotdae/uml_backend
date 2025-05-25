@@ -9,6 +9,7 @@ import { PackageModule } from './diagrams/package/package.module';
 import { UsecaseModule } from './diagrams/usecase/usecase.module';
 import { ComponentModule } from './diagrams/component/component.module';
 import { MailModule } from './mail/mail.module';
+import { GeminiModule } from './gemini/gemini.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { MailModule } from './mail/mail.module';
     UsecaseModule,
     ComponentModule,
     MailModule,
+    GeminiModule,
   ],
   controllers: [],
   providers: [],

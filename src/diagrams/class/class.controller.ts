@@ -5,7 +5,7 @@ import { UpdateClassDto } from './dto/update-class.dto';
 
 @Controller('class')
 export class ClassController {
-  constructor(private readonly classService: ClassService) {}
+  constructor(private readonly classService: ClassService) { }
 
   @Post()
   create(@Body() createClassDto: CreateClassDto) {
@@ -30,5 +30,15 @@ export class ClassController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.classService.delete(+id);
+  }
+
+  @Get(':id/generate-code/:language')
+  async generateCode(
+    @Param('id') id: string,
+    @Param('language') language: string
+  ) {
+    return {
+      code: await this.classService.generateCodeFromDiagram(+id, language),
+    };
   }
 }
