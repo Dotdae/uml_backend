@@ -9,6 +9,9 @@ import { PackageModule } from './diagrams/package/package.module';
 import { UsecaseModule } from './diagrams/usecase/usecase.module';
 import { ComponentModule } from './diagrams/component/component.module';
 import { MailModule } from './mail/mail.module';
+import { GenerationModule } from './generation/generation.module';
+
+
 
 @Module({
   imports: [
@@ -31,6 +34,8 @@ import { MailModule } from './mail/mail.module';
     UsecaseModule,
     ComponentModule,
     MailModule,
+    GenerationModule,
+
   ],
   controllers: [],
   providers: [],
