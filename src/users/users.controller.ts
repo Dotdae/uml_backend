@@ -34,6 +34,7 @@ export class UsersController {
 
   @Post('logout')
   logout(@Res() res: Response) {
+    console.log('Logout called in controller');
     return this.usersService.logout(res);
   }
 
@@ -100,5 +101,25 @@ export class UsersController {
     return res.redirect(
       `${process.env.FRONTEND_URL}/auth/google-callback?accessToken=${accessToken}`,
     );
+  }
+
+  @Get('profile')
+  @UseGuards(AuthGuard())
+  async getProfile(@GetUser() user: User, @Req() req: Request) {
+    console.log('Profile request received');
+    console.log('Auth header:', req.headers.authorization);
+    console.log('User from @GetUser():', user);
+
+    // Get fresh user data from database
+    const freshUser = await this.usersService.findOneBy(user.id);
+    console.log('Fresh user data:', freshUser);
+
+    return {
+      id: freshUser.id,
+      email: freshUser.email,
+      fullName: freshUser.fullName,
+      isActive: freshUser.isActive,
+      isVerified: freshUser.isVerified
+    };
   }
 }

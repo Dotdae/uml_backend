@@ -99,6 +99,7 @@ export class UsersService {
   }
 
   logout(res: Response) {
+    this.logger.log('Logout called');
     res.clearCookie('refreshToken', {
       httpOnly: true,
       sameSite: 'strict',

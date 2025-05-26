@@ -202,15 +202,29 @@ export class GenerationService {
 
       // Create the ZIP file after all files are written
       this.logger.log('Creating ZIP file...');
-      await zipGeneratedProject();
+      try {
+        await zipGeneratedProject();
+        this.logger.log('ZIP file created successfully');
 
-      // Read and return the ZIP buffer
-      this.logger.log('Reading ZIP buffer...');
-      const fs = await import('fs/promises');
-      const buffer = await fs.readFile('generated/project.zip');
-      this.logger.log('Generation completed successfully!');
-      
-      return buffer;
+        // Read and return the ZIP buffer
+        this.logger.log('Reading ZIP buffer...');
+        const fs = await import('fs/promises');
+        const buffer = await fs.readFile('generated/project.zip');
+        
+        // Verify ZIP file size
+        const stats = await fs.stat('generated/project.zip');
+        this.logger.log(`ZIP file size: ${stats.size} bytes`);
+        
+        if (stats.size === 0) {
+          throw new Error('Generated ZIP file is empty');
+        }
+        
+        this.logger.log('Generation completed successfully!');
+        return buffer;
+      } catch (error) {
+        this.logger.error(`Error creating ZIP file: ${error.message}`, error.stack);
+        throw new Error(`Failed to create ZIP file: ${error.message}`);
+      }
     } catch (error) {
       this.logger.error(`Error in code generation: ${error.message}`, error.stack);
       throw error;

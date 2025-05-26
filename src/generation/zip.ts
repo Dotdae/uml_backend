@@ -16,6 +16,12 @@ export async function zipGeneratedProject(): Promise<void> {
       logger.log(`Created output directory: ${outputDir}`);
     }
 
+    // Remove existing ZIP if it exists
+    if (fs.existsSync('generated/project.zip')) {
+      fs.unlinkSync('generated/project.zip');
+      logger.log('Removed existing ZIP file');
+    }
+
     const output = fs.createWriteStream('generated/project.zip');
     const archive = archiver('zip', {
       zlib: { level: 9 } // Maximum compression
@@ -72,7 +78,7 @@ export async function zipGeneratedProject(): Promise<void> {
       logger.warn('Angular directory not found');
     }
 
-    // Add NestJS package.json
+    // Add NestJS package.json and configuration files
     const nestPackageJson = {
       name: "nest-backend",
       version: "1.0.0",
@@ -110,7 +116,29 @@ export async function zipGeneratedProject(): Promise<void> {
       }
     };
 
-    // Add Angular package.json
+    const nestTsConfig = {
+      compilerOptions: {
+        module: "commonjs",
+        declaration: true,
+        removeComments: true,
+        emitDecoratorMetadata: true,
+        experimentalDecorators: true,
+        allowSyntheticDefaultImports: true,
+        target: "ES2021",
+        sourceMap: true,
+        outDir: "./dist",
+        baseUrl: "./",
+        incremental: true,
+        skipLibCheck: true,
+        strictNullChecks: false,
+        noImplicitAny: false,
+        strictBindCallApply: false,
+        forceConsistentCasingInFileNames: false,
+        noFallthroughCasesInSwitch: false
+      }
+    };
+
+    // Add Angular package.json and configuration files
     const angularPackageJson = {
       name: "angular-frontend",
       version: "1.0.0",
@@ -150,9 +178,42 @@ export async function zipGeneratedProject(): Promise<void> {
       }
     };
 
+    const angularTsConfig = {
+      compileOnSave: false,
+      compilerOptions: {
+        baseUrl: "./",
+        outDir: "./dist/out-tsc",
+        forceConsistentCasingInFileNames: true,
+        strict: true,
+        noImplicitOverride: true,
+        noPropertyAccessFromIndexSignature: true,
+        noImplicitReturns: true,
+        noFallthroughCasesInSwitch: true,
+        sourceMap: true,
+        declaration: false,
+        downlevelIteration: true,
+        experimentalDecorators: true,
+        moduleResolution: "node",
+        importHelpers: true,
+        target: "ES2022",
+        module: "ES2022",
+        useDefineForClassFields: false,
+        lib: ["ES2022", "dom"]
+      },
+      angularCompilerOptions: {
+        enableI18nLegacyMessageIdFormat: false,
+        strictInjectionParameters: true,
+        strictInputAccessModifiers: true,
+        strictTemplates: true
+      }
+    };
+
+    // Add configuration files
     archive.append(JSON.stringify(nestPackageJson, null, 2), { name: path.join('nest', 'package.json') });
+    archive.append(JSON.stringify(nestTsConfig, null, 2), { name: path.join('nest', 'tsconfig.json') });
     archive.append(JSON.stringify(angularPackageJson, null, 2), { name: path.join('angular', 'package.json') });
-    logger.log('Added package.json files to ZIP');
+    archive.append(JSON.stringify(angularTsConfig, null, 2), { name: path.join('angular', 'tsconfig.json') });
+    logger.log('Added package.json and tsconfig.json files to ZIP');
 
     // Add root package.json
     const rootPackageJson = {
@@ -162,7 +223,9 @@ export async function zipGeneratedProject(): Promise<void> {
       scripts: {
         "install:all": "cd nest && npm install && cd ../angular && npm install",
         "start:nest": "cd nest && npm run start",
-        "start:angular": "cd angular && npm run start"
+        "start:angular": "cd angular && npm run start",
+        "build:all": "cd nest && npm run build && cd ../angular && npm run build",
+        "test:all": "cd nest && npm run test && cd ../angular && npm run test"
       }
     };
 
@@ -190,6 +253,7 @@ This project contains both NestJS backend and Angular frontend code generated fr
       - /models - TypeScript interfaces
 
 ## Getting Started
+
 1. Install all dependencies:
    \`\`\`bash
    npm run install:all
@@ -199,27 +263,43 @@ This project contains both NestJS backend and Angular frontend code generated fr
    - NestJS: \`npm run start:nest\`
    - Angular: \`npm run start:angular\`
 
-## Generated Files
-The project structure follows standard NestJS and Angular conventions:
+3. Access the applications:
+   - NestJS API: http://localhost:3000
+   - Angular Frontend: http://localhost:4200
 
-### NestJS
-- Controllers handle HTTP requests
+## Development
+
+- Build both projects:
+  \`\`\`bash
+  npm run build:all
+  \`\`\`
+
+- Run tests:
+  \`\`\`bash
+  npm run test:all
+  \`\`\`
+
+## Project Structure
+
+### NestJS Backend
+- Controllers handle HTTP requests and define API endpoints
 - Services contain business logic
 - Entities define database models
 - DTOs validate request/response data
-- Modules organize application structure
+- Modules organize and configure the application
 
-### Angular
-- Components handle UI presentation
-- Services manage data and API calls
-- Models define TypeScript interfaces
+### Angular Frontend
+- Components handle UI elements and user interaction
+- Services manage data and communicate with the backend
+- Models define TypeScript interfaces for type safety
 `;
 
     archive.append(readme, { name: 'README.md' });
     logger.log('Added README.md to ZIP');
 
-    logger.log('Finalizing ZIP archive...');
+    // Finalize the archive
     archive.finalize();
+    logger.log('Finalizing ZIP archive...');
   });
 }
 
