@@ -36,8 +36,9 @@ export class ClassService {
     return await this.classRepository.save(newClass);
   }
 
-  findAll() {
-    return `This action returns all class`;
+  async findAll() {
+    const classes = await this.classRepository.find();
+    return classes;
   }
 
    // Obtener diagrama por ID

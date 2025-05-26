@@ -34,12 +34,29 @@ export class ProyectsService {
     return await this.proyectRepository.save(proyect);
   }
 
-  findAll() {
-    return `This action returns all proyects`;
+  async findAll() {
+    const proyects = await this.proyectRepository.find();
+    return proyects;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} proyect`;
+  async findOne(id: number) {
+    const proyect = await this.proyectRepository.findOne({
+      where: { id },
+      relations: {
+        userID: true,
+        sequence: true,
+        clase: true,
+        usecase: true,
+        paquete: true,
+        component: true,
+      },
+    });
+
+    if (!proyect) {
+      throw new NotFoundException(`Proyecto con ID ${id} no encontrado`);
+    }
+
+    return proyect;
   }
 
   async findOneBy(id: number): Promise<Proyect> {
