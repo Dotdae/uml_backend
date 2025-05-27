@@ -90,17 +90,26 @@ export class UsersService {
         expiresIn: '7d',
       },
     );
+    const accessToken = this.generateJwtToken({ id: user.id });
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       sameSite: 'strict',
     });
-    res.json({ token: this.generateJwtToken({ id: user.id }) });
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      sameSite: 'strict',
+    });
+    res.json({ token: accessToken });
   }
 
   logout(res: Response) {
     this.logger.log('Logout called');
     res.clearCookie('refreshToken', {
+      httpOnly: true,
+      sameSite: 'strict',
+    });
+    res.clearCookie('accessToken', {
       httpOnly: true,
       sameSite: 'strict',
     });

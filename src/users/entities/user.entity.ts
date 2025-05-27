@@ -1,4 +1,4 @@
-import { Proyect } from 'src/proyects/entities/proyect.entity';
+import { Project } from '../../projects/entities/project.entity';
 import {
   BeforeInsert,
   BeforeUpdate,
@@ -56,8 +56,7 @@ export class User {
   checkFieldsBeforeUpdate() {
     this.checkFieldsBeforeInsert();
   }
-  @OneToMany(() => Proyect, (project) => project.userID, {
-    onUpdate: 'CASCADE',
-  })
-  project: Proyect[];
+
+  @OneToMany(() => Project, (project) => project.userUUID)
+  projects: Project[];
 }
