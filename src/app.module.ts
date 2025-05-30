@@ -35,6 +35,7 @@ import { User } from './users/entities/user.entity';
           entities: [User, Project, DiagramType, Diagram],
           synchronize: true,
           logging: true,
+          dropSchema: true,
         };
       },
       inject: [ConfigService],

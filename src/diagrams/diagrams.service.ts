@@ -53,6 +53,9 @@ export class DiagramsService {
       await this.diagramTypeService.findOne(updateDiagramDto.type);
     }
     
+    // Increment version number
+    diagram.version += 1;
+    
     Object.assign(diagram, updateDiagramDto);
     return await this.diagramRepository.save(diagram);
   }

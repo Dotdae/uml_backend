@@ -16,6 +16,12 @@ export class Diagram {
   @Column()
   type: number;
 
+  @Column({ name: 'version', type: 'int', default: 1 })
+  version: number;
+
+  @Column({ name: 'name', type: 'varchar', length: 255 })
+  name: string;
+
   @ManyToOne(() => Project, project => project.diagrams)
   @JoinColumn({ name: 'id_project' })
   project: Project;

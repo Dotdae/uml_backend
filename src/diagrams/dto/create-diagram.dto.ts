@@ -1,4 +1,4 @@
-import { IsNumber, IsNotEmpty, IsObject } from 'class-validator';
+import { IsNumber, IsNotEmpty, IsObject, IsString } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class CreateDiagramDto {
@@ -23,4 +23,8 @@ export class CreateDiagramDto {
   @IsNumber()
   @IsNotEmpty()
   type: number;
+
+  @IsString()
+  @IsNotEmpty()
+  name: string;
 } 
