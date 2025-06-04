@@ -30,17 +30,46 @@ async function bootstrap() {
   // Swagger configuration
   const config = new DocumentBuilder()
     .setTitle('UML Backend API')
-    .setDescription('API for UML diagram management system')
+    .setDescription('API for UML diagram management system with comprehensive authentication and project management capabilities')
     .setVersion('1.0')
-    .addTag('projects')
-    .addTag('diagrams')
-    .addTag('users')
-    .addTag('status')
-    .addTag('trash-bin')
+    .addTag('users', 'User authentication and profile management')
+    .addTag('projects', 'Project management operations')
+    .addTag('diagrams', 'UML diagram operations')
+    .addTag('status', 'Project status management')
+    .addTag('trash-bin', 'Trash bin and recovery operations')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'JWT',
+        description: 'Enter JWT token',
+        in: 'header',
+      },
+      'JWT-auth',
+    )
+    .addCookieAuth(
+      'refreshToken',
+      {
+        type: 'apiKey',
+        in: 'cookie',
+        name: 'refreshToken',
+        description: 'Refresh token stored in HTTP-only cookie',
+      }
+    )
+    .addServer('http://localhost:3000', 'Development server')
+    .addServer('https://api.yourdomain.com', 'Production server')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  SwaggerModule.setup('api', app, document, {
+    swaggerOptions: {
+      persistAuthorization: true,
+      docExpansion: 'none',
+      filter: true,
+      showRequestDuration: true,
+    },
+  });
 
   await app.listen(process.env.PORT ?? 3000);
 }
