@@ -1,5 +1,4 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
-import { ProyectsService } from '../proyects/proyects.service';
 import { GeminiService } from './gemini/gemini.service';
 
 import {
@@ -20,13 +19,14 @@ import { parseClassDiagram } from './parse/class.parser';
 import { parseSequenceDiagram } from './parse/sequence.parser';
 import { parsePackageDiagram } from './parse/package.parser';
 import { parsePromptOutput } from './parse/prompt-output-parser';
+import { ProjectsService } from 'src/projects/projects.service';
 
 @Injectable()
 export class GenerationService {
   private readonly logger = new Logger(GenerationService.name);
 
   constructor(
-    private readonly projectsService: ProyectsService,
+    private readonly projectsService: ProjectsService,
     private readonly geminiService: GeminiService
   ) {}
 
@@ -34,7 +34,7 @@ export class GenerationService {
     this.logger.log(`Starting code generation for project ${projectId}`);
     
     try {
-      const diagrams = await this.projectsService.getProjectDiagrams(projectId);
+      const diagrams = await this.projectsService.getProjectDiagramsGrouped(projectId);
       this.logger.log(`Found diagrams: 
         Class: ${diagrams.classDiagrams?.length || 0},
         Sequence: ${diagrams.sequenceDiagrams?.length || 0},

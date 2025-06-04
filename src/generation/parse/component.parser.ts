@@ -5,9 +5,11 @@ export interface ParsedComponentDiagram {
 }
 
 export function parseComponentDiagram(json: any): ParsedComponentDiagram {
+  const component = (json.nodes || []).find((n: any) => n.type === 'component');
+
   return {
-    name: json.name,
-    responsibilities: json.description,
-    dependencies: json.dependencies || [],
+    name: component?.data.label || 'Component',
+    responsibilities: 'Responsibilities not defined',
+    dependencies: (json.connections || []).map((c: any) => c.label || 'dependency')
   };
 }

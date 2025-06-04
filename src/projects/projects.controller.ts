@@ -519,4 +519,10 @@ export class ProjectsController {
 
     return this.projectsService.remove(id);
   }
+
+
+  @Get(':projectId/diagrams-grouped')
+  async getGroupedDiagrams(@Param('projectId', ParseIntPipe) projectId: number) {
+    return await this.projectsService.getProjectDiagramsGrouped(projectId);
+  }
 }

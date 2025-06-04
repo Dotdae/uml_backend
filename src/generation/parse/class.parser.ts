@@ -19,7 +19,6 @@ export interface ParsedClassDiagram {
 }
 
 function parsePropertyString(prop: string): UMLAttribute {
-  // Example format: "- nombre: String" or "+ edad: int"
   const match = prop.match(/^([\-\+\#])\s*(\w+)\s*:\s*(\w+)$/);
   if (!match) {
     return {
@@ -28,7 +27,6 @@ function parsePropertyString(prop: string): UMLAttribute {
       visibility: 'private'
     };
   }
-  
   const [_, visibility, name, type] = match;
   return {
     name,
@@ -39,65 +37,48 @@ function parsePropertyString(prop: string): UMLAttribute {
 }
 
 function determineRelationType(text: string, fromText: string, toText: string): string {
-  if (text === 'herencia') {
-    return 'ManyToOne';
-  }
-  
-  if (fromText === '1' && toText === '0..n') {
-    return 'OneToMany';
-  }
-  
-  if (fromText === '1' && toText === '1..n') {
-    return 'OneToMany';
-  }
-  
-  if (fromText === '1' && toText === '1') {
-    return 'OneToOne';
-  }
-  
+  if (text === 'herencia') return 'ManyToOne';
+  if (fromText === '1' && toText === '0..n') return 'OneToMany';
+  if (fromText === '1' && toText === '1..n') return 'OneToMany';
+  if (fromText === '1' && toText === '1') return 'OneToOne';
   return 'ManyToMany';
 }
 
 export function parseClassDiagram(json: any): ParsedClassDiagram[] {
   const diagrams: ParsedClassDiagram[] = [];
-  
-  // Parse each node (class) in the diagram
-  for (const node of json.nodeDataArray) {
+
+  for (const node of json.nodes || []) {
+    if (node.type !== 'class') continue;
+
     const fields: UMLAttribute[] = [];
     const relations: UMLRelation[] = [];
-    
-    // Parse properties
-    if (node.properties) {
-      for (const prop of node.properties) {
-        fields.push(parsePropertyString(prop));
-      }
+    const props = node.data.properties || [];
+
+    for (const prop of props) {
+      fields.push(parsePropertyString(prop));
     }
-    
+
     diagrams.push({
-      name: node.name.replace('<<Interface>>', '').trim(),
+      name: node.data.label.replace('<<Interface>>', '').trim(),
       fields,
       relations
     });
   }
-  
-  // Parse relationships
-  for (const link of json.linkDataArray) {
-    const sourceClass = json.nodeDataArray.find((n: any) => n.key === link.from);
-    const targetClass = json.nodeDataArray.find((n: any) => n.key === link.to);
-    
-    if (sourceClass && targetClass) {
-      const relationType = determineRelationType(link.text, link.fromText, link.toText);
-      
-      const classIndex = diagrams.findIndex(d => d.name === sourceClass.name);
-      if (classIndex !== -1) {
-        diagrams[classIndex].relations.push({
-          type: relationType as any,
-          target: targetClass.name.replace('<<Interface>>', '').trim(),
-          field: link.text.toLowerCase()
-        });
-      }
-    }
+
+  for (const link of json.connections || []) {
+    const source = json.nodes.find((n: any) => n.id === link.source);
+    const target = json.nodes.find((n: any) => n.id === link.target);
+    if (!source || !target) continue;
+
+    const classIndex = diagrams.findIndex(d => d.name === source.data.label);
+    if (classIndex === -1) continue;
+
+    diagrams[classIndex].relations.push({
+      type: determineRelationType(link.type, '1', '*') as any,
+      target: target.data.label,
+      field: link.label?.toLowerCase() || 'relation'
+    });
   }
-  
+
   return diagrams;
 }

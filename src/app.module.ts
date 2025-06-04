@@ -14,6 +14,7 @@ import { Diagram } from './diagrams/entities/diagram.entity';
 import { User } from './users/entities/user.entity';
 import { Status } from './status/entities/status.entity';
 import { TrashBin } from './trash-bin/entities/trash-bin.entity';
+import { GenerationModule } from './generation/generation.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { TrashBin } from './trash-bin/entities/trash-bin.entity';
     MailModule,
     StatusModule,
     TrashBinModule,
+    GenerationModule,
   ],
 })
 export class AppModule {}
