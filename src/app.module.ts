@@ -6,10 +6,14 @@ import { ProjectsModule } from './projects/projects.module';
 import { DiagramTypeModule } from './diagrams/diagram-type.module';
 import { DiagramsModule } from './diagrams/diagrams.module';
 import { MailModule } from './mail/mail.module';
+import { StatusModule } from './status/status.module';
+import { TrashBinModule } from './trash-bin/trash-bin.module';
 import { Project } from './projects/entities/project.entity';
 import { DiagramType } from './diagrams/entities/diagram-type.entity';
 import { Diagram } from './diagrams/entities/diagram.entity';
 import { User } from './users/entities/user.entity';
+import { Status } from './status/entities/status.entity';
+import { TrashBin } from './trash-bin/entities/trash-bin.entity';
 
 @Module({
   imports: [
@@ -32,10 +36,9 @@ import { User } from './users/entities/user.entity';
           username: configService.get('DB_USER'),
           password: configService.get('DB_PASSWORD'),
           database: configService.get('DB_NAME'),
-          entities: [User, Project, DiagramType, Diagram],
+          entities: [User, Project, DiagramType, Diagram, Status, TrashBin],
           synchronize: true,
           logging: true,
-          dropSchema: true,
         };
       },
       inject: [ConfigService],
@@ -45,6 +48,8 @@ import { User } from './users/entities/user.entity';
     DiagramTypeModule,
     DiagramsModule,
     MailModule,
+    StatusModule,
+    TrashBinModule,
   ],
 })
 export class AppModule {}

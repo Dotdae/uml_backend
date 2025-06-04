@@ -1,6 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne, JoinColumn, CreateDateColumn } from 'typeorm';
 import { Diagram } from '../../diagrams/entities/diagram.entity';
 import { User } from '../../users/entities/user.entity';
+import { Status } from '../../status/entities/status.entity';
 
 @Entity('projects')
 export class Project {
@@ -19,4 +20,20 @@ export class Project {
 
   @OneToMany(() => Diagram, diagram => diagram.project)
   diagrams: Diagram[];
-} 
+
+  @Column({name: 'generated_counter', type: 'int', default: 0})
+  generatedCounter: number;
+
+  @Column({ name: 'status_id', type: 'int', nullable: true })
+  statusId: number;
+
+  @ManyToOne(() => Status, status => status.projects)
+  @JoinColumn({ name: 'status_id' })
+  status: Status;
+
+  @CreateDateColumn({name: 'created_at', type: 'timestamp', default: () => 'CURRENT_TIMESTAMP'})
+  createdAt: Date;
+
+  @CreateDateColumn({name: 'updated_at', type: 'timestamp', default: () => 'CURRENT_TIMESTAMP'})
+  updatedAt: Date;
+}

@@ -1,11 +1,19 @@
-import { IsString, IsNotEmpty, IsUUID, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsUUID, IsOptional, IsInt } from 'class-validator';
 
 export class CreateProjectDto {
   @IsUUID()
-  @IsOptional()
-  userUUID?: string;
+  @IsNotEmpty()
+  userUUID: string;
 
   @IsString()
   @IsNotEmpty()
   projectName: string;
-} 
+
+  @IsInt()
+  @IsOptional()
+  statusId?: number;
+
+  @IsInt()
+  @IsOptional()
+  generatedCounter?: number;
+}

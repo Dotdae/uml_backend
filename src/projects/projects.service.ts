@@ -18,14 +18,23 @@ export class ProjectsService {
 
   async findAll(): Promise<Project[]> {
     return await this.projectRepository.find({
-      relations: ['user', 'diagrams'],
+      relations: ['user', 'diagrams', 'status'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async findByUser(userUUID: string): Promise<Project[]> {
+    return await this.projectRepository.find({
+      where: { userUUID },
+      relations: ['user', 'diagrams', 'status'],
+      order: { createdAt: 'DESC' },
     });
   }
 
   async findOne(id: number): Promise<Project> {
     const project = await this.projectRepository.findOne({
       where: { id },
-      relations: ['user', 'diagrams'],
+      relations: ['user', 'diagrams', 'status'],
     });
     if (!project) {
       throw new NotFoundException(`Project with ID ${id} not found`);
@@ -45,4 +54,37 @@ export class ProjectsService {
       throw new NotFoundException(`Project with ID ${id} not found`);
     }
   }
-} 
+
+  async duplicate(id: number): Promise<Project> {
+    const originalProject = await this.findOne(id);
+
+    const duplicateData: CreateProjectDto = {
+      userUUID: originalProject.userUUID,
+      projectName: `${originalProject.projectName} (Copy)`,
+    };
+
+    return await this.create(duplicateData);
+  }
+
+  async findByStatus(statusId: number): Promise<Project[]> {
+    return await this.projectRepository.find({
+      where: { statusId },
+      relations: ['user', 'diagrams', 'status'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async findByUserAndStatus(userUUID: string, statusId: number): Promise<Project[]> {
+    return await this.projectRepository.find({
+      where: { userUUID, statusId },
+      relations: ['user', 'diagrams', 'status'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async updateStatus(id: number, statusId: number): Promise<Project> {
+    const project = await this.findOne(id);
+    project.statusId = statusId;
+    return await this.projectRepository.save(project);
+  }
+}

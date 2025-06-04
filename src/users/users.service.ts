@@ -145,13 +145,21 @@ export class UsersService {
     }
 
     try {
-      const payload = jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN);
+      const payload = jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN) as any;
+      console.log('Refresh token payload:', payload);
 
-      const newAccessToken = this.jwtService.sign({ sub: payload.sub });
+      // Use the id from the payload, not sub
+      const userId = payload.id;
+      if (!userId) {
+        throw new UnauthorizedException('Invalid refresh token payload');
+      }
 
-      const newRefreshToken = this.jwtService.sign(
-        { sub: payload.sub },
-        { secret: process.env.JWT_REFRESH_TOKEN, expiresIn: '7d' },
+      const newAccessToken = this.generateJwtToken({ id: userId });
+
+      const newRefreshToken = jwt.sign(
+        { id: userId },
+        process.env.JWT_REFRESH_TOKEN,
+        { expiresIn: '7d' },
       );
 
       res.cookie('refreshToken', newRefreshToken, {
@@ -159,10 +167,10 @@ export class UsersService {
         // secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
       });
-      console.log('Refresh token: ', newRefreshToken);
+      console.log('New access token generated for user:', userId);
       return res.json({ token: newAccessToken });
     } catch (err) {
-      console.log(err);
+      console.log('Refresh token error:', err);
       throw new UnauthorizedException('Invalid refresh token');
     }
   }
