@@ -49,4 +49,4 @@ export class DiagramsController {
   remove(@Param('id') id: string) {
     return this.diagramsService.remove(+id);
   }
-} 
+}

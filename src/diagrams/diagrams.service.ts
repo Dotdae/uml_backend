@@ -16,7 +16,7 @@ export class DiagramsService {
   async create(createDiagramDto: CreateDiagramDto): Promise<Diagram> {
     // Verify that the diagram type exists
     await this.diagramTypeService.findOne(createDiagramDto.type);
-    
+
     const diagram = this.diagramRepository.create(createDiagramDto);
     return await this.diagramRepository.save(diagram);
   }
@@ -47,15 +47,15 @@ export class DiagramsService {
 
   async update(id: number, updateDiagramDto: Partial<CreateDiagramDto>): Promise<Diagram> {
     const diagram = await this.findOne(id);
-    
+
     // If updating the type, verify it exists
     if (updateDiagramDto.type) {
       await this.diagramTypeService.findOne(updateDiagramDto.type);
     }
-    
+
     // Increment version number
     diagram.version += 1;
-    
+
     Object.assign(diagram, updateDiagramDto);
     return await this.diagramRepository.save(diagram);
   }
@@ -66,4 +66,4 @@ export class DiagramsService {
       throw new NotFoundException(`Diagram with ID ${id} not found`);
     }
   }
-} 
+}

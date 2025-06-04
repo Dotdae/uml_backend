@@ -14,4 +14,4 @@ import { DiagramTypeModule } from './diagram-type.module';
   providers: [DiagramsService],
   exports: [DiagramsService],
 })
-export class DiagramsModule {} 
+export class DiagramsModule {}
