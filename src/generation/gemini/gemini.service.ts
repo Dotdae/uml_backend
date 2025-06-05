@@ -14,9 +14,8 @@ export class GeminiService {
         throw new Error('GEMINI_API_KEY environment variable is not set');
       }
 
-      // Initialize Gemini
       this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-      
+
       // Configure the model with safety settings
       this.model = this.genAI.getGenerativeModel({
         model: "gemini-2.0-flash",
@@ -51,7 +50,7 @@ export class GeminiService {
     this.logger.debug('Generating code with prompt:', prompt);
     try {
       this.logger.debug('Sending request to Gemini API...');
-      
+
       // Configure generation parameters
       const result = await this.model.generateContent({
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
@@ -66,11 +65,11 @@ export class GeminiService {
       const response = await result.response;
       this.logger.debug('Received response from Gemini API');
       this.logger.debug(response.text());
-      
+
       if (!response.text()) {
         throw new Error('Empty response from Gemini API');
       }
-      
+
       return response.text();
     } catch (error) {
       this.logger.error(`Error generating code: ${error.message}`, error.stack);

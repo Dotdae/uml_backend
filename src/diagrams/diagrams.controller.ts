@@ -1,10 +1,15 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
 import { DiagramsService } from './diagrams.service';
 import { CreateDiagramDto } from './dto/create-diagram.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import { User } from 'src/users/entities/user.entity';
+import { GetUser } from 'src/users/decorators/get-user.decorator';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('diagrams')
+@ApiBearerAuth('JWT-auth')
 @Controller('diagrams')
+@UseGuards(AuthGuard('jwt'))
 export class DiagramsController {
   constructor(private readonly diagramsService: DiagramsService) {}
 
@@ -94,6 +99,7 @@ export class DiagramsController {
     return this.diagramsService.create(createDiagramDto);
   }
 
+
   @Get()
   @ApiOperation({
     summary: 'Get all diagrams or diagrams by project',
@@ -154,6 +160,26 @@ export class DiagramsController {
       return this.diagramsService.findByProject(projectId);
     }
     return this.diagramsService.findAll();
+  }
+
+  @Get('count')
+  @ApiOperation({
+    summary: 'Get the count of diagrams for the authenticated user',
+    description: 'Returns the total number of diagrams owned by the authenticated user'
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns the count of diagrams',
+    schema: {
+      type: 'object',
+      properties: {
+        count: { type: 'number', example: 5 }
+      }
+    }
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing authentication token.' })
+  async getDiagramCount(@GetUser() user: User) {
+    return await this.diagramsService.getDiagramCount(user.id);
   }
 
   @Get(':id')

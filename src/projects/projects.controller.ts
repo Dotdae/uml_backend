@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ParseIntPipe, UseGuards, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ParseIntPipe, UseGuards, ForbiddenException, Logger } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
@@ -11,6 +11,7 @@ import { User } from '../users/entities/user.entity';
 @Controller('projects')
 @UseGuards(AuthGuard())
 export class ProjectsController {
+  private readonly logger = new Logger(ProjectsController.name);
   constructor(private readonly projectsService: ProjectsService) {}
 
   @Post()
@@ -77,9 +78,9 @@ export class ProjectsController {
         message: { type: 'string', example: 'Unauthorized' }
       }
     }
-  })
+  }
+)
   create(@Body() createProjectDto: CreateProjectDto, @GetUser() user: User) {
-    // Ensure the project is created for the authenticated user
     createProjectDto.userUUID = user.id;
     return this.projectsService.create(createProjectDto);
   }
@@ -118,6 +119,27 @@ export class ProjectsController {
   findAll(@GetUser() user: User) {
     // Always return projects for the authenticated user only
     return this.projectsService.findByUser(user.id);
+  }
+
+  @Get('count')
+  @ApiOperation({
+    summary: 'Get the count of projects for the authenticated user',
+    description: 'Retrieves the total number of projects for the currently authenticated user.'
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'The count of projects for the authenticated user.',
+    schema: {
+      type: 'object',
+      properties: {
+        count: { type: 'number', example: 10 }
+      }
+    }
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing authentication token.' })
+  async getProjectCount(@GetUser() user: User) {
+    this.logger.log(`Getting project count for user ${user.id}`);
+    return await this.projectsService.getProjectCount(user.id);
   }
 
   @Get('user/:userUUID')
@@ -222,6 +244,11 @@ export class ProjectsController {
   findByStatus(@Param('statusId', ParseIntPipe) statusId: number, @GetUser() user: User) {
     // Only return projects for the authenticated user with the specified status
     return this.projectsService.findByUserAndStatus(user.id, statusId);
+  }
+
+  @Get(':projectId/diagrams-grouped')
+  async getGroupedDiagrams(@Param('projectId', ParseIntPipe) projectId: number) {
+    return await this.projectsService.getProjectDiagramsGrouped(projectId);
   }
 
   @Get(':id')
@@ -508,11 +535,5 @@ export class ProjectsController {
     }
 
     return this.projectsService.remove(id);
-  }
-
-
-  @Get(':projectId/diagrams-grouped')
-  async getGroupedDiagrams(@Param('projectId', ParseIntPipe) projectId: number) {
-    return await this.projectsService.getProjectDiagramsGrouped(projectId);
   }
 }

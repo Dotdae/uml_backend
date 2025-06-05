@@ -37,6 +37,8 @@ async function bootstrap() {
     .addTag('diagrams', 'UML diagram operations')
     .addTag('status', 'Project status management')
     .addTag('trash-bin', 'Trash bin and recovery operations')
+    .addTag('diagram-type', 'Diagram type management')
+    .addTag('generation', 'Generation of code from UML diagrams')
     .addBearerAuth(
       {
         type: 'http',

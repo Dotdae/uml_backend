@@ -3,7 +3,7 @@ import { DiagramTypeService } from './diagram-type.service';
 import { CreateDiagramTypeDto } from './dto/create-diagram-type.dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
-@ApiTags('diagram-types')
+@ApiTags('diagram-type')
 @Controller('diagram-types')
 export class DiagramTypeController {
   constructor(private readonly diagramTypeService: DiagramTypeService) {}
@@ -45,4 +45,4 @@ export class DiagramTypeController {
   remove(@Param('id') id: string) {
     return this.diagramTypeService.remove(+id);
   }
-} 
+}

@@ -1,5 +1,6 @@
-import { IsNumber, IsNotEmpty, IsObject, IsString } from 'class-validator';
+import { IsNumber, IsNotEmpty, IsObject, IsString, IsEnum } from 'class-validator';
 import { Transform } from 'class-transformer';
+import { DiagramType } from '../enums/diagram-type.enum';
 
 export class CreateDiagramDto {
   @IsNumber()
@@ -20,11 +21,11 @@ export class CreateDiagramDto {
   })
   infoJson: Record<string, any>;
 
-  @IsNumber()
+  @IsEnum(DiagramType)
   @IsNotEmpty()
-  type: number;
+  type: DiagramType;
 
   @IsString()
   @IsNotEmpty()
   name: string;
-} 
+}

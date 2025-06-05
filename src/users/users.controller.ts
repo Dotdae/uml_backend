@@ -104,8 +104,8 @@ export class UsersController {
       example1: {
         summary: 'Standard login',
         value: {
-          email: 'john.doe@example.com',
-          password: 'SecurePassword123!'
+          email: 'pcu18021379@gmail.com',
+          password: 'NewSecurePassword123'
         }
       }
     }
