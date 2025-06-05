@@ -25,17 +25,17 @@ export class ProjectsController {
       example1: {
         summary: 'E-commerce project',
         value: {
-          name: 'E-commerce System',
-          description: 'UML diagrams for online shopping platform with user management, product catalog, and order processing',
-          statusId: 1
+          projectName: 'E-commerce System',
+          statusId: 1,
+          userUUID: 'user-uuid-123'
         }
       },
       example2: {
         summary: 'Banking system',
         value: {
-          name: 'Banking Management System',
-          description: 'Complete UML documentation for banking operations including accounts, transactions, and customer management',
-          statusId: 1
+          projectName: 'Banking Management System',
+          statusId: 1,
+          userUUID: 'user-uuid-123'
         }
       }
     }
@@ -47,8 +47,7 @@ export class ProjectsController {
       type: 'object',
       properties: {
         id: { type: 'number', example: 1 },
-        name: { type: 'string', example: 'E-commerce System' },
-        description: { type: 'string', example: 'UML diagrams for online shopping platform' },
+        projectName: { type: 'string', example: 'E-commerce System' },
         userUUID: { type: 'string', example: 'user-uuid-123' },
         statusId: { type: 'number', example: 1 },
         createdAt: { type: 'string', format: 'date-time', example: '2024-01-15T10:30:00.000Z' },
@@ -63,7 +62,7 @@ export class ProjectsController {
       type: 'object',
       properties: {
         statusCode: { type: 'number', example: 400 },
-        message: { type: 'array', items: { type: 'string' }, example: ['name should not be empty', 'name must be a string'] },
+        message: { type: 'array', items: { type: 'string' }, example: ['projectName should not be empty', 'projectName must be a string'] },
         error: { type: 'string', example: 'Bad Request' }
       }
     }
@@ -99,8 +98,7 @@ export class ProjectsController {
         type: 'object',
         properties: {
           id: { type: 'number', example: 1 },
-          name: { type: 'string', example: 'E-commerce System' },
-          description: { type: 'string', example: 'UML diagrams for online shopping platform' },
+          projectName: { type: 'string', example: 'E-commerce System' },
           userUUID: { type: 'string', example: 'user-uuid-123' },
           statusId: { type: 'number', example: 1 },
           createdAt: { type: 'string', format: 'date-time', example: '2024-01-15T10:30:00.000Z' },
@@ -142,8 +140,7 @@ export class ProjectsController {
         type: 'object',
         properties: {
           id: { type: 'number', example: 1 },
-          name: { type: 'string', example: 'E-commerce System' },
-          description: { type: 'string', example: 'UML diagrams for online shopping platform' },
+          projectName: { type: 'string', example: 'E-commerce System' },
           userUUID: { type: 'string', example: 'user-uuid-123' },
           statusId: { type: 'number', example: 1 },
           createdAt: { type: 'string', format: 'date-time' },
@@ -193,8 +190,7 @@ export class ProjectsController {
         type: 'object',
         properties: {
           id: { type: 'number', example: 1 },
-          name: { type: 'string', example: 'E-commerce System' },
-          description: { type: 'string', example: 'UML diagrams for online shopping platform' },
+          projectName: { type: 'string', example: 'E-commerce System' },
           userUUID: { type: 'string', example: 'user-uuid-123' },
           statusId: { type: 'number', example: 1 },
           createdAt: { type: 'string', format: 'date-time' },
@@ -246,8 +242,7 @@ export class ProjectsController {
       type: 'object',
       properties: {
         id: { type: 'number', example: 1 },
-        name: { type: 'string', example: 'E-commerce System' },
-        description: { type: 'string', example: 'UML diagrams for online shopping platform with user management, product catalog, and order processing' },
+        projectName: { type: 'string', example: 'E-commerce System' },
         userUUID: { type: 'string', example: 'user-uuid-123' },
         statusId: { type: 'number', example: 1 },
         createdAt: { type: 'string', format: 'date-time', example: '2024-01-15T10:30:00.000Z' },
@@ -330,8 +325,7 @@ export class ProjectsController {
       type: 'object',
       properties: {
         id: { type: 'number', example: 2 },
-        name: { type: 'string', example: 'E-commerce System (Copy)' },
-        description: { type: 'string', example: 'UML diagrams for online shopping platform (Duplicated)' },
+        projectName: { type: 'string', example: 'E-commerce System (Copy)' },
         userUUID: { type: 'string', example: 'user-uuid-123' },
         statusId: { type: 'number', example: 1 },
         createdAt: { type: 'string', format: 'date-time', example: '2024-01-15T11:00:00.000Z' },
@@ -370,8 +364,7 @@ export class ProjectsController {
     schema: {
       type: 'object',
       properties: {
-        name: { type: 'string', example: 'Updated E-commerce System' },
-        description: { type: 'string', example: 'Updated description for the e-commerce platform' },
+        projectName: { type: 'string', example: 'Updated E-commerce System' },
         statusId: { type: 'number', example: 2 }
       }
     },
@@ -379,14 +372,13 @@ export class ProjectsController {
       nameUpdate: {
         summary: 'Update project name',
         value: {
-          name: 'Advanced E-commerce System'
+          projectName: 'Advanced E-commerce System'
         }
       },
       fullUpdate: {
         summary: 'Update multiple fields',
         value: {
-          name: 'Enterprise E-commerce Platform',
-          description: 'Complete UML documentation for enterprise-level e-commerce solution with microservices architecture',
+          projectName: 'Enterprise E-commerce Platform',
           statusId: 1
         }
       }
@@ -399,8 +391,7 @@ export class ProjectsController {
       type: 'object',
       properties: {
         id: { type: 'number', example: 1 },
-        name: { type: 'string', example: 'Updated E-commerce System' },
-        description: { type: 'string', example: 'Updated description for the e-commerce platform' },
+        projectName: { type: 'string', example: 'Updated E-commerce System' },
         userUUID: { type: 'string', example: 'user-uuid-123' },
         statusId: { type: 'number', example: 1 },
         createdAt: { type: 'string', format: 'date-time', example: '2024-01-15T10:30:00.000Z' },
@@ -447,8 +438,7 @@ export class ProjectsController {
       type: 'object',
       properties: {
         id: { type: 'number', example: 1 },
-        name: { type: 'string', example: 'E-commerce System' },
-        description: { type: 'string', example: 'UML diagrams for online shopping platform' },
+        projectName: { type: 'string', example: 'E-commerce System' },
         userUUID: { type: 'string', example: 'user-uuid-123' },
         statusId: { type: 'number', example: 2 },
         updatedAt: { type: 'string', format: 'date-time', example: '2024-01-15T10:45:00.000Z' },
@@ -499,7 +489,7 @@ export class ProjectsController {
           type: 'object',
           properties: {
             id: { type: 'number', example: 1 },
-            name: { type: 'string', example: 'E-commerce System' },
+            projectName: { type: 'string', example: 'E-commerce System' },
             statusId: { type: 'number', example: 2 }
           }
         }
