@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { Project } from '../../projects/entities/project.entity';
 import { DiagramType } from './diagram-type.entity';
 
@@ -22,6 +22,12 @@ export class Diagram {
   @Column({ name: 'name', type: 'varchar', length: 255 })
   name: string;
 
+  @CreateDateColumn({ name: 'created_at', type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  createdAt: Date;
+
+  @UpdateDateColumn({ name: 'updated_at', type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
+  updatedAt: Date;
+
   @ManyToOne(() => Project, project => project.diagrams)
   @JoinColumn({ name: 'id_project' })
   project: Project;
@@ -29,4 +35,4 @@ export class Diagram {
   @ManyToOne(() => DiagramType, diagramType => diagramType.diagrams)
   @JoinColumn({ name: 'type' })
   diagramType: DiagramType;
-} 
+}
