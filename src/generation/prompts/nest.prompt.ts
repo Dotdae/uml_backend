@@ -252,6 +252,35 @@ async function bootstrap() {
 bootstrap();
 \`\`\`
 
+
+---
+
+## PROJECT STRUCTURE
+
+The generated project must follow this folder and file structure under the base path:
+
+\`\`\`
+generated/nest/
+├── src/
+│   ├── main.ts
+│   ├── app.module.ts
+│   ├── controllers/
+│   │   └── *.controller.ts
+│   ├── services/
+│   │   └── *.service.ts
+│   ├── modules/
+│   │   └── *.module.ts
+│   ├── entities/
+│   │   └── *.entity.ts
+│   └── dto/
+│       └── create-*.dto.ts
+│       └── update-*.dto.ts
+\`\`\`
+
+
+> All code must be correctly placed according to this structure and should include necessary imports and decorators.
+
+
 ---
 
 ## Requirements:

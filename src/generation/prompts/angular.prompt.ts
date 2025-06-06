@@ -1,5 +1,5 @@
 export const angularPrompt = (
-  type: 'component' | 'service' | 'model',
+  type: 'component' | 'service' | 'model' | 'main',
   name: string,
   descriptionOrResponsibilitiesOrProperties: string
 ) => {
@@ -60,6 +60,14 @@ export interface Example {
   name: string;
 }
 \`\`\``,
+    main: `\`\`\`typescript
+// src/main.ts
+import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
+import { AppModule } from './app/app.module';
+
+platformBrowserDynamic().bootstrapModule(AppModule)
+  .catch(err => console.error(err));
+\`\`\``,
   };
 
   const specifics = {
@@ -78,7 +86,64 @@ export interface Example {
       description: `Properties:\n${descriptionOrResponsibilitiesOrProperties}`,
       additional: `- Include proper type definitions\n- Add JSDoc comments for documentation`,
     },
+    main: {
+      title: `Generate the entry point file for Angular (main.ts)`,
+      description: `This file should bootstrap the main Angular module (AppModule)`,
+      additional: `- Use platformBrowserDynamic to bootstrap AppModule\n- Handle errors appropriately`,
+    },
   };
+
+  const projectStructure = `
+---
+
+## PROJECT STRUCTURE
+
+The Angular project must follow this exact folder structure, starting from the root directory:
+
+\`\`\`
+generated/angular/
+├── src/
+│   ├── main.ts
+│   ├── index.html
+│   ├── styles.css
+│   ├── app/
+│   │   ├── app.module.ts
+│   │   ├── app.component.ts
+│   │   ├── app.component.html
+│   │   ├── app.component.css
+│   │   ├── components/
+│   │   │   └── [name]/
+│   │   │       ├── [name].component.ts
+│   │   │       ├── [name].component.html
+│   │   │       ├── [name].component.css
+│   │   ├── services/
+│   │   │   └── [name].service.ts
+│   │   ├── models/
+│   │   │   └── [name].model.ts
+│   │   ├── pages/
+│   │   │   └── [name]/
+│   │   │       ├── [name].page.ts
+│   │   │       ├── [name].page.html
+│   │   │       ├── [name].page.css
+│   │   ├── routing/
+│   │   │   └── app-routing.module.ts
+\`\`\`
+
+### Guidelines:
+- Do **not** nest folders unnecessarily (e.g., avoid \`angular/angular/src\` or \`src/src/app\`).
+- Place UI components inside \`components/\`, full views in \`pages/\`, and data models in \`models/\`.
+- Register all services and components in their respective module files.
+- Follow Angular CLI conventions and Angular 13+ best practices.
+
+---
+
+## Requirements:
+- Code must be TypeScript-based and compile-ready.
+- Use Angular decorators properly.
+- HTML and CSS must be included in separate files for each component and page.
+- Use \`app-routing.module.ts\` to define all application routes.
+- Avoid boilerplate placeholders; include meaningful logic and structure.
+`;
 
   const s = specifics[type];
 
@@ -93,5 +158,6 @@ ${s.additional}
 Example format:
 ${sharedExamples[type]}
 
-Generate the complete ${type} implementation:`;
+Generate the complete ${type} implementation:
+${projectStructure}`;
 };
