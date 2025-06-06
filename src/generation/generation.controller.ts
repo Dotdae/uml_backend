@@ -14,7 +14,7 @@ export class GenerationController {
     @Param('id', ParseIntPipe) id: number,
     @Res() res: Response,
   ) {
-    const zipBuffer = await this.generationService.generateFullProject(id);
+    const zipBuffer = await this.generationService.generateNestProject(id);
 
     res.set({
       'Content-Type': 'application/zip',

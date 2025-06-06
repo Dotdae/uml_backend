@@ -1,25 +1,15 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { ProjectsService } from 'src/projects/projects.service';
 import { GeminiService } from './gemini/gemini.service';
-
-import {
-  angularComponentPrompt,
-  angularServicePrompt,
-} from './prompts/angular.prompt';
-import {
-  nestControllerPrompt,
-  nestEntityPrompt,
-  nestModulePrompt,
-} from './prompts/nest.prompt';
+import { parseClassDiagram } from './parse/class.parser';
+import { parseUsecaseDiagram } from './parse/usecase.parser';
+import { parseComponentDiagram } from './parse/component.parser';
+import { parsePackageDiagram } from './parse/package.parser';
+import { parseSequenceDiagram } from './parse/sequence.parser';
+import { parsePromptOutput } from './parse/prompt-output-parser';
+import { nestUnifiedPrompt } from './prompts/nest.prompt';
 import { ProjectBuilder } from './assembler/project-builder';
 import { zipGeneratedProject } from './zip';
-
-import { parseComponentDiagram } from './parse/component.parser';
-import { parseUsecaseDiagram } from './parse/usecase.parser';
-import { parseClassDiagram } from './parse/class.parser';
-import { parseSequenceDiagram } from './parse/sequence.parser';
-import { parsePackageDiagram } from './parse/package.parser';
-import { parsePromptOutput } from './parse/prompt-output-parser';
-import { ProjectsService } from 'src/projects/projects.service';
 
 @Injectable()
 export class GenerationService {
@@ -30,234 +20,153 @@ export class GenerationService {
     private readonly geminiService: GeminiService
   ) {}
 
-  /**
-   * @summary Generate a full project with all diagrams
-   * @description All the diagrams are processed in the following order:
-   * 1. Class diagrams → Entities (if the diagram has classes)
-   * 2. Use case diagrams → Controller + Service + DTOs (if the diagram has actions)
-   * 3. Component diagrams → Angular Services (if the diagram has components)
-   * 4. Package diagrams → Nest Modules (if the diagram has modules)
-   * 5. Sequence diagrams → Angular Components (if the diagram has messages)
-   * @param projectId - The ID of the project to generate
-   * @returns A buffer containing the generated project
-   */
-  async generateFullProject(projectId: number): Promise<Buffer> {
-    this.logger.log(`Starting code generation for project ${projectId}`);
+  async generateNestProject(projectId: number): Promise<Buffer> {
+    this.logger.log(`Starting NestJS code generation for project ${projectId}`);
 
     try {
-      //* Get the diagrams grouped by type
       const diagrams = await this.projectsService.getProjectDiagramsGrouped(projectId);
-      this.logger.log(`Found diagrams:
+      this.logger.log(`Found diagrams: 
         Class: ${diagrams.classDiagrams?.length || 0},
         Sequence: ${diagrams.sequenceDiagrams?.length || 0},
         Component: ${diagrams.componentDiagrams?.length || 0},
         Package: ${diagrams.packageDiagrams?.length || 0},
-        UseCase: ${diagrams.usecaseDiagrams?.length || 0}
-      `);
+        UseCase: ${diagrams.usecaseDiagrams?.length || 0}`);
 
-      //* Create a new project builder
-      const builder = new ProjectBuilder();
-      let allFiles = [];
+      const parsedContext = {
+        entities: [],
+        dtos: [],
+        services: [],
+        controllers: [],
+        modules: [],
+      };
 
-      //? Process class diagrams → Entities
-      this.logger.log('Processing class diagrams...');
+      // Class Diagrams
       for (const diagram of diagrams.classDiagrams || []) {
-        try {
-          this.logger.debug(`Parsing class diagram: ${JSON.stringify(diagram.info)}`);
-          const parsedClasses = parseClassDiagram(JSON.parse(diagram.info));
-          this.logger.log(`Found ${parsedClasses.length} classes in diagram`);
-
-          for (const parsed of parsedClasses) {
-            this.logger.log(`Generating entity for class: ${parsed.name}`);
-            const fields = parsed.fields.map(f =>
-              `${f.name}: ${f.type}${f.nullable ? ' (nullable)' : ''}${f.primary ? ' (primary)' : ''} - ${f.visibility}`
-            ).join('\n');
-
-            const entityPrompt = nestEntityPrompt(parsed.name, fields);
-            this.logger.debug(`Sending prompt to LLM for ${parsed.name}`);
-            const response = await this.callLLM(entityPrompt);
-            this.logger.debug(`Received response from LLM for ${parsed.name}`);
-
-            const parsedFiles = parsePromptOutput(response);
-            this.logger.log(`Generated ${parsedFiles.length} files for class ${parsed.name}`);
-            allFiles.push(...parsedFiles);
-          }
-        } catch (error) {
-          this.logger.error(`Error processing class diagram: ${error.message}`, error.stack);
-          throw error;
-        }
-      }
-
-      //? Process use case diagrams → Controller + Service + DTOs
-      this.logger.log('Processing use case diagrams...');
-      for (const diagram of diagrams.usecaseDiagrams || []) {
-        try {
-          const diagramInfo = JSON.parse(diagram.info);
-          this.logger.debug(`Parsing use case diagram: ${JSON.stringify(diagramInfo)}`);
-
-          const parsed = parseUsecaseDiagram(diagramInfo);
-          if (!parsed.actions || parsed.actions.length === 0) {
-            this.logger.warn(`No actions found in use case diagram, skipping...`);
-            continue;
-          }
-
-          this.logger.log(`Generating controller for entity: ${parsed.entity}`);
-
-          const actions = parsed.actions.map(a =>
-            `${a.method} ${a.path} - ${a.name}: ${a.description || ''}`
+        const parsedClasses = parseClassDiagram(JSON.parse(diagram.info));
+        for (const parsed of parsedClasses) {
+          const fields = parsed.fields.map(f =>
+            `${f.name}: ${f.type}${f.nullable ? ' (nullable)' : ''}${f.primary ? ' (primary)' : ''} - ${f.visibility}`
           ).join('\n');
 
-          const controllerPrompt = nestControllerPrompt(parsed.entity, actions);
-          const response = await this.callLLM(controllerPrompt);
-          const parsedFiles = parsePromptOutput(response);
-          this.logger.log(`Generated ${parsedFiles.length} files for use case ${parsed.entity}`);
-          allFiles.push(...parsedFiles);
-        } catch (error) {
-          this.logger.error(`Error processing use case diagram: ${error.message}`, error.stack);
-          continue;
+          parsedContext.entities.push({
+            name: parsed.name,
+            fields,
+          });
         }
       }
 
-      //? Process component diagrams → Angular Services
-      this.logger.log('Processing component diagrams...');
+      // Use Case Diagrams
+      for (const diagram of diagrams.usecaseDiagrams || []) {
+        const diagramInfo = JSON.parse(diagram.info);
+        const parsed = parseUsecaseDiagram(diagramInfo);
+
+        const actions = parsed.actions.map(a =>
+          `${a.method} ${a.path} - ${a.name}: ${a.description || ''}`
+        ).join('\n');
+
+        parsedContext.controllers.push({
+          resource: parsed.entity,
+          actions,
+        });
+
+        parsedContext.services.push({
+          name: parsed.entity,
+          responsibilities: `Handle operations like:\n${actions}`,
+        });
+
+        parsedContext.dtos.push({
+          name: `${parsed.entity}Dto`,
+          fields: parsed.actions.map(a => `${a.name}: string`).join('\n'),
+        });
+      }
+
+      // Package Diagrams
+      for (const diagram of diagrams.packageDiagrams || []) {
+        const diagramInfo = JSON.parse(diagram.info);
+        const parsed = parsePackageDiagram(diagramInfo);
+
+        for (const mod of parsed.modules || []) {
+          const responsibilities = [
+            mod.components?.length ? `Includes: ${mod.components.join(', ')}` : '',
+            mod.dependencies?.length ? `Depends on: ${mod.dependencies.join(', ')}` : '',
+          ].filter(Boolean).join('\n');
+
+          parsedContext.modules.push({
+            name: mod.name,
+            responsibilities: responsibilities || 'No responsibilities defined',
+          });
+        }
+      }
+
+      // Component Diagrams
       for (const diagram of diagrams.componentDiagrams || []) {
         try {
           const parsed = parseComponentDiagram(JSON.parse(diagram.info));
-          this.logger.log(`Generating service for component: ${parsed.name}`);
-
-          const servicePrompt = angularServicePrompt(parsed.name, parsed.responsibilities);
-          const response = await this.callLLM(servicePrompt);
-          const parsedFiles = parsePromptOutput(response);
-          this.logger.log(`Generated ${parsedFiles.length} files for component ${parsed.name}`);
-          allFiles.push(...parsedFiles);
-        } catch (error) {
-          this.logger.error(`Error processing component diagram: ${error.message}`, error.stack);
-          throw error;
-        }
-      }
-
-      //? Process package diagrams → Nest Modules
-      this.logger.log('Processing package diagrams...');
-      for (const diagram of diagrams.packageDiagrams || []) {
-        try {
-          const diagramInfo = JSON.parse(diagram.info);
-          this.logger.debug(`Parsing package diagram: ${JSON.stringify(diagramInfo)}`);
-
-          const parsed = parsePackageDiagram(diagramInfo);
-          if (!parsed.modules || parsed.modules.length === 0) {
-            this.logger.warn(`No modules found in package diagram, skipping...`);
-            continue;
-          }
-
-          for (const mod of parsed.modules) {
-            this.logger.log(`Generating module: ${mod.name}`);
-            const components = mod.components?.length > 0
-              ? `Includes: ${mod.components.join(', ')}`
-              : 'No components specified';
-            const dependencies = mod.dependencies?.length > 0
-              ? `Dependencies: ${mod.dependencies.join(', ')}`
-              : 'No dependencies';
-
-            const modulePrompt = nestModulePrompt(
-              mod.name,
-              `${components}\n${dependencies}`
-            );
-            const response = await this.callLLM(modulePrompt);
-            const parsedFiles = parsePromptOutput(response);
-            this.logger.log(`Generated ${parsedFiles.length} files for module ${mod.name}`);
-            allFiles.push(...parsedFiles);
+          for (const comp of parsed.components) {
+            parsedContext.services.push({
+              name: comp.name,
+              responsibilities: `Responsibilities: ${comp.responsibilities}\nDependencies: ${(comp.dependencies || []).join(', ')}`,
+            });
           }
         } catch (error) {
-          this.logger.error(`Error processing package diagram: ${error.message}`, error.stack);
-          // Continue with other diagrams instead of failing completely
+          this.logger.error(`Error parsing component diagram: ${error.message}`, error.stack);
           continue;
         }
       }
 
-      //? Process sequence diagrams → Angular Components
-      this.logger.log('Processing sequence diagrams...');
+      // Sequence Diagrams
       for (const diagram of diagrams.sequenceDiagrams || []) {
         try {
-          const diagramInfo = JSON.parse(diagram.info);
-          this.logger.debug(`Parsing sequence diagram: ${JSON.stringify(diagramInfo)}`);
+          const parsed = parseSequenceDiagram(JSON.parse(diagram.info));
 
-          const parsed = parseSequenceDiagram(diagramInfo);
-          if (!parsed.messages || parsed.messages.length === 0) {
-            this.logger.warn(`No messages found in sequence diagram, skipping...`);
-            continue;
-          }
-
-          this.logger.log(`Generating component for sequence: ${parsed.name}`);
-
-          const description = parsed.messages.map(m =>
-            `${m.from} → ${m.to}: ${m.message} (${m.type})`
+          const interactions = parsed.messages.map(m =>
+            `${m.from} -> ${m.to}: ${m.message} (${m.type})`
           ).join('\n');
 
-          const componentPrompt = angularComponentPrompt(
-            parsed.name,
-            `Main actor: ${parsed.actor}\nInteractions:\n${description}`
-          );
-          const response = await this.callLLM(componentPrompt);
-          const parsedFiles = parsePromptOutput(response);
-          this.logger.log(`Generated ${parsedFiles.length} files for sequence ${parsed.name}`);
-          allFiles.push(...parsedFiles);
+          parsedContext.services.push({
+            name: parsed.name,
+            responsibilities: `Actor: ${parsed.actor}\nInteractions:\n${interactions}`
+          });
         } catch (error) {
-          this.logger.error(`Error processing sequence diagram: ${error.message}`, error.stack);
+          this.logger.error(`Error parsing sequence diagram: ${error.message}`, error.stack);
           continue;
         }
       }
 
-      //! Write all generated files first
-      this.logger.log(`Writing ${allFiles.length} generated files...`);
-      await builder.writeFiles(allFiles);
+      // Prompt para generación NestJS
+      const prompt = nestUnifiedPrompt('MyGeneratedProject', parsedContext);
 
-      //! Create the ZIP file after all files are written
-      this.logger.log('Creating ZIP file...');
-      try {
-        await zipGeneratedProject();
-        this.logger.log('ZIP file created successfully');
+      this.logger.log('Calling LLM to generate NestJS code...');
+      const response = await this.callLLM(prompt);
+      const files = parsePromptOutput(response);
 
-        // Read and return the ZIP buffer
-        this.logger.log('Reading ZIP buffer...');
-        const fs = await import('fs/promises');
-        const buffer = await fs.readFile('generated/project.zip');
+      const builder = new ProjectBuilder();
+      await builder.writeFiles(files);
 
-        // Verify ZIP file size
-        const stats = await fs.stat('generated/project.zip');
-        this.logger.log(`ZIP file size: ${stats.size} bytes`);
+      await zipGeneratedProject();
+      const fs = await import('fs/promises');
+      const buffer = await fs.readFile('generated/project.zip');
 
-        if (stats.size === 0) {
-          throw new Error('Generated ZIP file is empty');
-        }
-
-        this.logger.log('Generation completed successfully!');
-        return buffer;
-      } catch (error) {
-        this.logger.error(`Error creating ZIP file: ${error.message}`, error.stack);
-        throw new Error(`Failed to create ZIP file: ${error.message}`);
+      const stats = await fs.stat('generated/project.zip');
+      if (stats.size === 0) {
+        throw new Error('Generated ZIP file is empty');
       }
+
+      this.logger.log('NestJS project generated and zipped successfully!');
+      return buffer;
+
     } catch (error) {
-      this.logger.error(`Error in code generation: ${error.message}`, error.stack);
+      this.logger.error(`Error generating NestJS project: ${error.message}`, error.stack);
       throw error;
     }
   }
 
-  /**
-   * @summary Call the LLM with a prompt
-   * @description This method is used to call the LLM with a prompt.
-   * It uses the GeminiService to generate the code.
-   * @param prompt - The prompt to call the LLM with
-   * @returns The response from the LLM
-   */
   private async callLLM(prompt: string): Promise<string> {
-    this.logger.debug('Calling LLM with prompt:', prompt);
     try {
-      //* Generate the code with the GeminiService
       const response = await this.geminiService.generateCode(prompt);
-      this.logger.debug('Received response from LLM');
       return response;
     } catch (error) {
-      this.logger.error(`Error calling LLM: ${error.message}`, error.stack);
+      this.logger.error(`LLM call failed: ${error.message}`, error.stack);
       throw error;
     }
   }

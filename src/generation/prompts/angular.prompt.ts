@@ -1,20 +1,18 @@
-export const angularComponentPrompt = (componentName: string, description: string) => `
-You are a professional Angular developer.
-Generate a complete Angular component for: ${componentName}
+export const angularPrompt = (
+  type: 'component' | 'service' | 'model',
+  name: string,
+  descriptionOrResponsibilitiesOrProperties: string
+) => {
+  const sharedHeader = `You are a professional Angular developer.`;
 
-Description:
-${description}
-
-Requirements:
+  const sharedRequirements = `Requirements:
 - Generate TypeScript code blocks with file paths in comments
 - Include all necessary imports
-- Follow Angular best practices
-- Add proper types and interfaces
-- Include component, template, and styles
-- Use proper decorators and lifecycle hooks
+- Follow Angular and TypeScript best practices
+- Add proper types and interfaces`;
 
-Example format:
-\`\`\`typescript
+  const sharedExamples = {
+    component: `\`\`\`typescript
 // src/app/components/example/example.component.ts
 import { Component, OnInit } from '@angular/core';
 
@@ -42,27 +40,8 @@ export class ExampleComponent implements OnInit {
 .example {
   // styles here
 }
-\`\`\`
-
-Generate the complete component implementation:`;
-
-export const angularServicePrompt = (serviceName: string, responsibilities: string) => `
-You are a professional Angular developer.
-Generate a complete Angular service for: ${serviceName}
-
-Responsibilities:
-${responsibilities}
-
-Requirements:
-- Generate TypeScript code blocks with file paths in comments
-- Include all necessary imports
-- Follow Angular best practices
-- Add proper types and interfaces
-- Include HTTP client methods if needed
-- Use proper decorators and error handling
-
-Example format:
-\`\`\`typescript
+\`\`\``,
+    service: `\`\`\`typescript
 // src/app/services/example.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
@@ -73,32 +52,46 @@ import { HttpClient } from '@angular/common/http';
 export class ExampleService {
   constructor(private http: HttpClient) {}
 }
-\`\`\`
-
-Generate the complete service implementation:`;
-
-export const angularModelPrompt = (modelName: string, properties: string) => `
-You are a professional Angular developer.
-Generate a complete Angular model/interface for: ${modelName}
-
-Properties:
-${properties}
-
-Requirements:
-- Generate TypeScript code blocks with file paths in comments
-- Include all necessary imports
-- Follow TypeScript best practices
-- Add proper types and interfaces
-- Include proper type definitions
-- Add JSDoc comments for documentation
-
-Example format:
-\`\`\`typescript
+\`\`\``,
+    model: `\`\`\`typescript
 // src/app/models/example.model.ts
 export interface Example {
   id: number;
   name: string;
 }
-\`\`\`
+\`\`\``,
+  };
 
-Generate the complete model implementation:`;
+  const specifics = {
+    component: {
+      title: `Generate a complete Angular component for: ${name}`,
+      description: `Description:\n${descriptionOrResponsibilitiesOrProperties}`,
+      additional: `- Include component, template, and styles\n- Use proper decorators and lifecycle hooks`,
+    },
+    service: {
+      title: `Generate a complete Angular service for: ${name}`,
+      description: `Responsibilities:\n${descriptionOrResponsibilitiesOrProperties}`,
+      additional: `- Include HTTP client methods if needed\n- Use proper decorators and error handling`,
+    },
+    model: {
+      title: `Generate a complete Angular model/interface for: ${name}`,
+      description: `Properties:\n${descriptionOrResponsibilitiesOrProperties}`,
+      additional: `- Include proper type definitions\n- Add JSDoc comments for documentation`,
+    },
+  };
+
+  const s = specifics[type];
+
+  return `${sharedHeader}
+${s.title}
+
+${s.description}
+
+${sharedRequirements}
+${s.additional}
+
+Example format:
+${sharedExamples[type]}
+
+Generate the complete ${type} implementation:`;
+};

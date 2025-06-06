@@ -1,113 +1,266 @@
-export const nestModulePrompt = (moduleName: string, responsibilities: string) => `
+export const nestUnifiedPrompt = (projectName: string, context: {
+  entities: { name: string, fields: string }[],
+  dtos: { name: string, fields: string }[],
+  services: { name: string, responsibilities: string }[],
+  controllers: { resource: string, actions: string }[],
+  modules: { name: string, responsibilities: string }[],
+}) => `
 You are a professional NestJS developer.
-Generate a complete NestJS module for: ${moduleName}
+Generate a complete NestJS backend project for: ${projectName}
 
-Responsibilities:
-${responsibilities}
+## Overview:
+Generate all components needed for a working application:
+- TypeORM entities
+- DTOs (create & update)
+- RESTful controllers
+- NestJS services
+- NestJS modules
+- Root application bootstrap files: \`app.module.ts\` and \`main.ts\`
 
-Requirements:
-- Generate TypeScript code blocks with file paths in comments
-- Include all necessary imports
-- Follow NestJS best practices
-- Use TypeORM decorators if needed
-- Add proper types and interfaces
+---
 
-Example format:
+## ENTITIES
+
+### Entities to generate:
+${context.entities.map(e => `- ${e.name}: ${e.fields}`).join('\n')}
+
+### Example format:
 \`\`\`typescript
-// src/modules/example.module.ts
-import { Module } from '@nestjs/common';
-
-@Module({
-  imports: [],
-  controllers: [],
-  providers: []
-})
-export class ExampleModule {}
-\`\`\`
-
-Generate the complete module implementation:`;
-
-export const nestEntityPrompt = (entityName: string, fields: string) => `
-You are a professional NestJS developer.
-Generate a TypeORM entity for ${entityName} with the following fields:
-
-${fields}
-
-Requirements:
-- Generate TypeScript code blocks with file paths in comments
-- Include all necessary imports
-- Use TypeORM decorators (@Entity, @Column, etc.)
-- Add proper validation decorators
-- Include relationships if specified
-- Add proper types and interfaces
-
-Example format:
-\`\`\`typescript
-// src/entities/example.entity.ts
+// src/entities/user.entity.ts
 import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
-export class Example {
+export class User {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @Column()
+  name: string;
+
+  @Column({ unique: true })
+  email: string;
 }
 \`\`\`
 
-Generate the complete entity implementation:`;
+---
 
-export const nestControllerPrompt = (resourceName: string, actions: string) => `
-You are a professional NestJS developer.
-Generate a RESTful controller for ${resourceName} with the following actions:
+## DTOS
 
-${actions}
+### DTOs to generate:
+${context.dtos.map(d => `- ${d.name}: ${d.fields}`).join('\n')}
 
-Requirements:
-- Generate TypeScript code blocks with file paths in comments
-- Include all necessary imports
-- Use proper HTTP decorators
-- Add request/response DTOs
-- Include Swagger documentation
-- Add proper types and interfaces
-
-Example format:
+### Example format:
 \`\`\`typescript
-// src/controllers/example.controller.ts
-import { Controller, Get } from '@nestjs/common';
+// src/dto/create-user.dto.ts
+import { IsEmail, IsString, IsNotEmpty } from 'class-validator';
 
-@Controller('example')
-export class ExampleController {
-  @Get()
-  findAll() {
-    return [];
+export class CreateUserDto {
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @IsEmail()
+  email: string;
+}
+\`\`\`
+
+\`\`\`typescript
+// src/dto/update-user.dto.ts
+import { PartialType } from '@nestjs/swagger';
+import { CreateUserDto } from './create-user.dto';
+
+export class UpdateUserDto extends PartialType(CreateUserDto) {}
+\`\`\`
+
+---
+
+## SERVICES
+
+### Services to generate:
+${context.services.map(s => `- ${s.name}: ${s.responsibilities}`).join('\n')}
+
+### Example format:
+\`\`\`typescript
+// src/services/user.service.ts
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { User } from '../entities/user.entity';
+import { CreateUserDto } from '../dto/create-user.dto';
+import { UpdateUserDto } from '../dto/update-user.dto';
+
+@Injectable()
+export class UserService {
+  constructor(
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
+  ) {}
+
+  async create(dto: CreateUserDto): Promise<User> {
+    const user = this.userRepository.create(dto);
+    return this.userRepository.save(user);
+  }
+
+  async findAll(): Promise<User[]> {
+    return this.userRepository.find();
+  }
+
+  async findOne(id: number): Promise<User> {
+    return this.userRepository.findOneBy({ id });
+  }
+
+  async update(id: number, dto: UpdateUserDto): Promise<User> {
+    await this.userRepository.update(id, dto);
+    return this.findOne(id);
+  }
+
+  async remove(id: number): Promise<void> {
+    await this.userRepository.delete(id);
   }
 }
 \`\`\`
 
-Generate the complete controller implementation and any necessary DTOs:`;
+---
 
-export const nestDtoPrompt = (dtoName: string, fields: string) => `
-You are a professional NestJS developer.
-Generate DTOs for ${dtoName} with the following fields:
+## CONTROLLERS
 
-${fields}
+### Controllers to generate:
+${context.controllers.map(c => `- ${c.resource}: ${c.actions}`).join('\n')}
 
-Requirements:
-- Generate TypeScript code blocks with file paths in comments
-- Include all necessary imports
-- Use class-validator decorators
-- Add proper types and interfaces
-- Include both Create and Update DTOs
-
-Example format:
+### Example format:
 \`\`\`typescript
-// src/dto/create-example.dto.ts
-import { IsString, IsNotEmpty } from 'class-validator';
+// src/controllers/user.controller.ts
+import { Controller, Get, Post, Body, Param, Put, Delete } from '@nestjs/common';
+import { UserService } from '../services/user.service';
+import { CreateUserDto } from '../dto/create-user.dto';
+import { UpdateUserDto } from '../dto/update-user.dto';
+import { ApiTags, ApiOperation } from '@nestjs/swagger';
 
-export class CreateExampleDto {
-  @IsString()
-  @IsNotEmpty()
-  name: string;
+@ApiTags('users')
+@Controller('users')
+export class UserController {
+  constructor(private readonly userService: UserService) {}
+
+  @Post()
+  @ApiOperation({ summary: 'Create a new user' })
+  create(@Body() dto: CreateUserDto) {
+    return this.userService.create(dto);
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'Get all users' })
+  findAll() {
+    return this.userService.findAll();
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get a user by ID' })
+  findOne(@Param('id') id: string) {
+    return this.userService.findOne(+id);
+  }
+
+  @Put(':id')
+  @ApiOperation({ summary: 'Update a user' })
+  update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
+    return this.userService.update(+id, dto);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete a user' })
+  remove(@Param('id') id: string) {
+    return this.userService.remove(+id);
+  }
 }
 \`\`\`
 
-Generate the complete DTO implementations:`;
+---
+
+## MODULES
+
+### Modules to generate:
+${context.modules.map(m => `- ${m.name}: ${m.responsibilities}`).join('\n')}
+
+### Example format:
+\`\`\`typescript
+// src/modules/user.module.ts
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { UserService } from '../services/user.service';
+import { UserController } from '../controllers/user.controller';
+import { User } from '../entities/user.entity';
+
+@Module({
+  imports: [TypeOrmModule.forFeature([User])],
+  providers: [UserService],
+  controllers: [UserController],
+})
+export class UserModule {}
+\`\`\`
+
+---
+
+## ROOT FILES
+
+### Example for \`app.module.ts\`:
+\`\`\`typescript
+// src/app.module.ts
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { UserModule } from './modules/user.module';
+
+@Module({
+  imports: [
+    TypeOrmModule.forRoot({
+      type: 'postgres',
+      host: 'localhost',
+      port: 5432,
+      username: 'postgres',
+      password: 'postgres',
+      database: 'mydb',
+      entities: [__dirname + '/entities/*.entity.{ts,js}'],
+      synchronize: true,
+    }),
+    UserModule,
+  ],
+})
+export class AppModule {}
+\`\`\`
+
+### Example for \`main.ts\`:
+\`\`\`typescript
+// src/main.ts
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+import { ValidationPipe } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+
+  app.useGlobalPipes(new ValidationPipe());
+
+  const config = new DocumentBuilder()
+    .setTitle('API')
+    .setDescription('The API description')
+    .setVersion('1.0')
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api', app, document);
+
+  await app.listen(3000);
+}
+bootstrap();
+\`\`\`
+
+---
+
+## Requirements:
+- TypeScript code blocks with correct file paths in comments
+- Proper NestJS best practices
+- TypeORM + class-validator decorators
+- Swagger docs in controllers and bootstrap
+- Correct use of async/await and dependency injection
+- Avoid placeholders or empty methods
+
+Generate the full application now:
+`;
