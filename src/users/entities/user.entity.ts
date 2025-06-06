@@ -39,6 +39,21 @@ export class User {
   @Column('text', {
     nullable: true,
   })
+  phone: string;
+
+  @Column('date', {
+    nullable: true,
+  })
+  birthdate: Date;
+
+  @Column('text', {
+    nullable: true,
+  })
+  avatar: string;
+
+  @Column('text', {
+    nullable: true,
+  })
   verificationCode: string;
 
   @Column('text', { nullable: true })

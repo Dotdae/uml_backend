@@ -7,9 +7,14 @@ import {
   Param,
   Res,
   Req,
+  Patch,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from './decorators/get-user.decorator';
@@ -17,7 +22,8 @@ import { User } from './entities/user.entity';
 import { GetRawHeaders } from './decorators/get-raw-headers.decorator';
 import { Response, Request } from 'express';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiBearerAuth, ApiCookieAuth } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiBearerAuth, ApiCookieAuth, ApiConsumes } from '@nestjs/swagger';
 
 @ApiTags('users')
 @Controller('users')
@@ -557,7 +563,10 @@ export class UsersController {
         email: { type: 'string', example: 'john.doe@example.com' },
         fullName: { type: 'string', example: 'John Doe' },
         isActive: { type: 'boolean', example: true },
-        isVerified: { type: 'boolean', example: true }
+        isVerified: { type: 'boolean', example: true },
+        avatar: { type: 'string', example: 'uploads/avatars/user_avatar.jpg' },
+        phone: { type: 'string', example: '+1234567890' },
+        birthdate: { type: 'string', format: 'date', example: '1990-01-01' }
       }
     }
   })
@@ -576,7 +585,62 @@ export class UsersController {
       email: freshUser.email,
       fullName: freshUser.fullName,
       isActive: freshUser.isActive,
-      isVerified: freshUser.isVerified
+      isVerified: freshUser.isVerified,
+      avatar: freshUser.avatar,
+      phone: freshUser.phone,
+      birthdate: freshUser.birthdate
     };
+  }
+
+  @Patch('profile/update')
+  @ApiBearerAuth('JWT-auth')
+  @UseGuards(AuthGuard())
+  @ApiOperation({
+    summary: 'Update user profile',
+    description: 'Updates the authenticated user\'s profile information.'
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User profile updated successfully.',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', example: 'User profile updated successfully' }
+      }
+    }
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing authentication token.' })
+  async updateProfile(
+    @GetUser() user: User,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
+    return this.usersService.updateProfile(user.id, updateUserDto);
+  }
+
+  @Post('profile/avatar')
+  @ApiBearerAuth('JWT-auth')
+  @UseGuards(AuthGuard())
+  @ApiOperation({
+    summary: 'Upload user avatar',
+    description: 'Uploads a new avatar for the authenticated user.'
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiResponse({
+    status: 200,
+    description: 'Avatar uploaded successfully.',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', example: 'Avatar uploaded successfully' }
+      }
+    }
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing authentication token.' })
+  @UseInterceptors(FileInterceptor('avatar'))
+  async uploadAvatar(
+    @GetUser() user: User,
+    @UploadedFile() avatar: Express.Multer.File,
+  ) {
+    return this.usersService.uploadAvatar(user.id, avatar);
   }
 }
