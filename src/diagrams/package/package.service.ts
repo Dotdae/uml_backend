@@ -40,8 +40,12 @@ export class PackageService {
   async findAll(): Promise<Package[]> {
     return await this.packageRepository.find({ relations: ['project'] });
   }
-  findOne(id: number) {
-    return `This action returns a #${id} package`;
+  async findOne(id: number) {
+    const packageItem = await this.packageRepository.findOne({ where: { id } });
+    if (!packageItem) {
+      throw new NotFoundException(`El paquete con ID ${id} no existe`);
+    }
+    return packageItem;
   }
 
   // 🔹 Actualizar un paquete

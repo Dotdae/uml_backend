@@ -19,6 +19,8 @@ import { JwtService } from '@nestjs/jwt';
 import { MailService } from 'src/mail/mail.service';
 import * as crypto from 'crypto';
 import { Response, Request } from 'express';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class UsersService {
@@ -90,16 +92,26 @@ export class UsersService {
         expiresIn: '7d',
       },
     );
+    const accessToken = this.generateJwtToken({ id: user.id });
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       sameSite: 'strict',
     });
-    res.json({ token: this.generateJwtToken({ id: user.id }) });
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      sameSite: 'strict',
+    });
+    res.json({ token: accessToken });
   }
 
   logout(res: Response) {
+    this.logger.log('Logout called');
     res.clearCookie('refreshToken', {
+      httpOnly: true,
+      sameSite: 'strict',
+    });
+    res.clearCookie('accessToken', {
       httpOnly: true,
       sameSite: 'strict',
     });
@@ -135,13 +147,21 @@ export class UsersService {
     }
 
     try {
-      const payload = jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN);
+      const payload = jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN) as any;
+      console.log('Refresh token payload:', payload);
 
-      const newAccessToken = this.jwtService.sign({ sub: payload.sub });
+      // Use the id from the payload, not sub
+      const userId = payload.id;
+      if (!userId) {
+        throw new UnauthorizedException('Invalid refresh token payload');
+      }
 
-      const newRefreshToken = this.jwtService.sign(
-        { sub: payload.sub },
-        { secret: process.env.JWT_REFRESH_TOKEN, expiresIn: '7d' },
+      const newAccessToken = this.generateJwtToken({ id: userId });
+
+      const newRefreshToken = jwt.sign(
+        { id: userId },
+        process.env.JWT_REFRESH_TOKEN,
+        { expiresIn: '7d' },
       );
 
       res.cookie('refreshToken', newRefreshToken, {
@@ -152,10 +172,11 @@ export class UsersService {
       console.log('Refresh token: ', newRefreshToken);
       console.log('New access token: ', newAccessToken);
       console.log('Payload: ', payload);
-      
-      return res.json({ token: newAccessToken });
+
+      console.log('New access token generated for user:', userId);
+      return res.json({ token: newAccessToken, refreshToken: newRefreshToken });
     } catch (err) {
-      console.log(err);
+      console.log('Refresh token error:', err);
       throw new UnauthorizedException('Invalid refresh token');
     }
   }
@@ -271,5 +292,84 @@ export class UsersService {
   private generateJwtToken(payload: JwtPayload) {
     const token = this.jwtService.sign(payload);
     return token;
+  }
+
+  async updateProfile(userId: string, updateUserDto: UpdateUserDto) {
+    // Find the user
+    const user = await this.userRepository.findOneBy({ id: userId });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Update the user with new data
+    Object.assign(user, updateUserDto);
+
+    // Save the updated user
+    const updatedUser = await this.userRepository.save(user);
+
+    // Return user data without password
+    const { password, verificationCode, resetCode, resetExpires, ...userResponse } = updatedUser;
+
+    return {
+      message: 'Profile updated successfully',
+      user: userResponse
+    };
+  }
+
+  async uploadAvatar(userId: string, file: any) {
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
+    }
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml'];
+    if (!allowedTypes.includes(file.mimetype)) {
+      throw new BadRequestException('Invalid file type. Only JPG, PNG, and SVG are allowed.');
+    }
+
+    // Validate file size (10MB max)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      throw new BadRequestException('File size too large. Maximum size is 10MB.');
+    }
+
+    // Find the user
+    const user = await this.userRepository.findOneBy({ id: userId });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    try {
+      // Create uploads directory if it doesn't exist
+      const uploadsDir = path.join(process.cwd(), 'uploads', 'avatars');
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+
+      // Generate unique filename
+      const fileExtension = path.extname(file.originalname);
+      const fileName = `${userId}_${Date.now()}${fileExtension}`;
+      const filePath = path.join(uploadsDir, fileName);
+
+      // Save file to disk
+      fs.writeFileSync(filePath, file.buffer);
+
+      // Create URL for the saved file
+      const avatarUrl = `/uploads/avatars/${fileName}`;
+
+      // Update user's avatar field
+      user.avatar = avatarUrl;
+      await this.userRepository.save(user);
+
+      return {
+        message: 'Avatar uploaded successfully',
+        avatarUrl: avatarUrl
+      };
+    } catch (error) {
+      this.logger.error('Error saving avatar file:', error);
+      throw new InternalServerErrorException('Failed to save avatar file');
+    }
   }
 }

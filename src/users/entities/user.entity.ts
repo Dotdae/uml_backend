@@ -1,4 +1,4 @@
-import { Proyect } from 'src/proyects/entities/proyect.entity';
+import { Project } from '../../projects/entities/project.entity';
 import {
   BeforeInsert,
   BeforeUpdate,
@@ -40,6 +40,12 @@ export class User {
     nullable: true,
   })
   avatarUrl: string;
+  phone: string;
+
+  @Column('date', {
+    nullable: true,
+  })
+  birthdate: Date;
 
   @Column('text', {
     nullable: true,
@@ -50,6 +56,7 @@ export class User {
     default: false,
   })
   isGoogleUser: boolean;
+  avatar: string;
 
   @Column('text', {
     nullable: true,
@@ -72,8 +79,6 @@ export class User {
     this.checkFieldsBeforeInsert();
   }
 
-  @OneToMany(() => Proyect, (project) => project.userID, {
-    onUpdate: 'CASCADE',
-  })
-  project: Proyect[];
+  @OneToMany(() => Project, (project) => project.userUUID)
+  projects: Project[];
 }

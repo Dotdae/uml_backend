@@ -14,7 +14,7 @@ export class Proyect {
   @Column({ type: 'varchar', length: 255 })
   name: string;
 
-  @ManyToOne(() => User, (user) => user.project, { onDelete: 'CASCADE' })
+  @ManyToOne(() => User, (user) => user.projects, { onDelete: 'CASCADE' })
   userID: User;
 
   @OneToMany(() => Sequence, (sequence) => sequence.project, { onUpdate: 'CASCADE' })
